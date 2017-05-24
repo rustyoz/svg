@@ -54,54 +54,78 @@ func parseTuple(l *gl.Lexer) (Tuple, error) {
 }
 
 func parseTransform(tstring string) (mt.Transform, error) {
-	var tm mt.Transform
 	lexer, _ := gl.Lex("tlexer", tstring)
 	for {
 		i := lexer.NextItem()
 		switch i.Type {
 		case gl.ItemEOS:
-			break
+			return mt.Identity(),
+				fmt.Errorf("transform parse failed.")
 		case gl.ItemWord:
 			switch i.Value {
 			case "matrix":
-				err := parseMatrix(lexer, &tm)
-				return tm, err
+				return parseMatrix(lexer)
 				// case "scale":
 				// case "rotate":
-
+			case "translate":
+				return parseTranslate(lexer)
 			}
 		}
 	}
 }
 
-func parseMatrix(l *gl.Lexer, t *mt.Transform) error {
+func parseMatrix(l *gl.Lexer) (mt.Transform, error) {
+	nums, err := parseParenNumList(l, 6)
+	if err != nil {
+		return mt.Identity(),
+			fmt.Errorf("Error Parsing Transform Matrix: %v", err)
+	}
+	var tm mt.Transform
+	for i := 0; i < 6; i++ {
+		tm[i%3][i/3] = nums[i]
+	}
+	return tm, nil
+}
+
+func parseTranslate(l *gl.Lexer) (mt.Transform, error) {
+	nums, err := parseParenNumList(l, 2)
+	if err != nil {
+		return mt.Identity(), fmt.Errorf("Error Parsing Translate: %v", err)
+	}
+	tm := mt.Identity()
+	tm[0][2] = nums[0]
+	tm[1][2] = nums[1]
+	return tm, nil
+}
+
+// Parse a parenthesized list of ncount numbers.
+func parseParenNumList(l *gl.Lexer, ncount int) ([]float64, error) {
 	i := l.NextItem()
 	if i.Type != gl.ItemParan {
-		return fmt.Errorf("Error Parsing Transform Matrix: Expected Opening Parantheses")
+		return nil, fmt.Errorf("Expected Opening Parantheses")
 	}
-	var ncount int
+	var nums []float64
 	for {
-		if ncount > 0 {
+		if len(nums) > 0 {
 			for l.PeekItem().Type == gl.ItemComma || l.PeekItem().Type == gl.ItemWSP {
 				l.NextItem()
 			}
 		}
 		if l.PeekItem().Type != gl.ItemNumber {
-			return fmt.Errorf("Error Parsing Transform Matrix: Expected Number got %v", l.PeekItem().String())
+			return nil, fmt.Errorf("Expected Number got %v", l.PeekItem().String())
 		}
 		n, err := parseNumber(l.NextItem())
 		if err != nil {
-			return err
+			return nil, err
 		}
-		t[ncount%2][ncount/3] = n
-		ncount++
-		if ncount > 5 {
+		nums = append(nums, n)
+		if len(nums) >= ncount {
 			i = l.PeekItem()
 			if i.Type != gl.ItemParan {
-				return fmt.Errorf("Error Parsing Transform Matrix: Expected Closing Parantheses")
+				return nil, fmt.Errorf("Expected Closing Parantheses")
 			}
 			l.NextItem() // consume Parantheses
-			return nil
+			return nums, nil
 		}
 	}
 }

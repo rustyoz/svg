@@ -9,13 +9,14 @@ import (
 )
 
 type Path struct {
-	Id          string `xml:"id,attr"`
-	D           string `xml:"d,attr"`
-	Style       string `xml:"style,attr"`
-	properties  map[string]string
-	strokeWidth float64
-	Segments    chan Segment
-	group       *Group
+	Id              string `xml:"id,attr"`
+	D               string `xml:"d,attr"`
+	Style           string `xml:"style,attr"`
+	TransformString string `xml:"transform,attr"`
+	properties      map[string]string
+	strokeWidth     float64
+	Segments        chan Segment
+	group           *Group
 }
 
 // Segment
@@ -60,14 +61,19 @@ func newPathDParse() *pathDescriptionParser {
 // Parse()
 // interprets path description, transform and style atttributes to create a channel of segments.
 func (p *Path) Parse() chan Segment {
-	fmt.Println("p.group", p.group)
-
-	fmt.Println("p.group.Owner", p.group.Owner)
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
 	pdp.svg = p.group.Owner
-	pdp.transform.MultiplyWith(*p.group.Transform)
+	pathTransform := mt.Identity()
+	if p.TransformString != "" {
+		pt, err := parseTransform(p.TransformString)
+		if err == nil {
+			pathTransform = pt
+		}
+	}
+	pdp.transform = mt.MultiplyTransforms(pdp.transform, *p.group.Transform)
+	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 	p.Segments = make(chan Segment)
 	l, _ := gl.Lex(fmt.Sprint(p.Id), p.D)
 	pdp.lex = *l
@@ -115,7 +121,6 @@ func parseCommand(pdp *pathDescriptionParser, l *gl.Lexer, i gl.Item) error {
 	case "z":
 		err = parseClose(pdp)
 	}
-	//	fmt.Println(err)
 	return err
 
 }
@@ -146,7 +151,6 @@ func parseMoveToAbs(pdp *pathDescriptionParser) error {
 	} else {
 
 		var s Segment
-		fmt.Println(pdp.svg)
 		s.Width = pdp.p.strokeWidth * pdp.p.group.Owner.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
@@ -196,7 +200,6 @@ func parseLineToAbs(pdp *pathDescriptionParser) error {
 }
 
 func parseMoveToRel(pdp *pathDescriptionParser) error {
-	//	fmt.Println("parsemovetorel")
 	pdp.lex.ConsumeWhiteSpace()
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
@@ -336,7 +339,7 @@ func parseClose(pdp *pathDescriptionParser) error {
 		pdp.currentsegment = nil
 		return nil
 	}
-	return fmt.Errorf("Error Parsing closepath command, no previes path")
+	return fmt.Errorf("Error Parsing closepath command, no previous path")
 
 }
 
