@@ -19,7 +19,7 @@ type Svg struct {
 }
 
 type Group struct {
-	Id              string
+	ID              string
 	Stroke          string
 	StrokeWidth     int32
 	Fill            string
@@ -36,15 +36,15 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":
-			g.Id = attr.Value
+			g.ID = attr.Value
 		case "stroke":
 			g.Stroke = attr.Value
 		case "stroke-width":
-			if intValue, err := strconv.ParseInt(attr.Value, 10, 32); err != nil {
+			intValue, err := strconv.ParseInt(attr.Value, 10, 32)
+			if err != nil {
 				return err
-			} else {
-				g.StrokeWidth = int32(intValue)
 			}
+			g.StrokeWidth = int32(intValue)
 		case "fill":
 			g.Fill = attr.Value
 		case "fill-rule":
@@ -81,9 +81,8 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 
 			if err = decoder.DecodeElement(elementStruct, &tok); err != nil {
 				return fmt.Errorf("Error decoding element of Group\n%s", err)
-			} else {
-				g.Elements = append(g.Elements, elementStruct)
 			}
+			g.Elements = append(g.Elements, elementStruct)
 
 		case xml.EndElement:
 			return nil
@@ -106,7 +105,7 @@ func ParseSvg(str string, name string, scale float64) (*Svg, error) {
 
 	err := xml.Unmarshal([]byte(str), &svg)
 	if err != nil {
-		return nil, fmt.Errorf("ParseSvg Error: %v\n", err)
+		return nil, fmt.Errorf("ParseSvg Error: %v", err)
 	}
 	fmt.Println(len(svg.Groups))
 	for i := range svg.Groups {

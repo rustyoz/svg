@@ -3,7 +3,7 @@ package svg
 import mt "github.com/rustyoz/Mtransform"
 
 type Rect struct {
-	Id        string `xml:"id,attr"`
+	ID        string `xml:"id,attr"`
 	Width     string `xml:"width,attr"`
 	Height    string `xml:"height,attr"`
 	Transform string `xml:"transform,attr"`

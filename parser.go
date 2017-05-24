@@ -60,7 +60,7 @@ func parseTransform(tstring string) (mt.Transform, error) {
 		switch i.Type {
 		case gl.ItemEOS:
 			return mt.Identity(),
-				fmt.Errorf("transform parse failed.")
+				fmt.Errorf("transform parse failed")
 		case gl.ItemWord:
 			switch i.Value {
 			case "matrix":

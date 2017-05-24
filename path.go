@@ -9,7 +9,7 @@ import (
 )
 
 type Path struct {
-	Id              string `xml:"id,attr"`
+	ID              string `xml:"id,attr"`
 	D               string `xml:"d,attr"`
 	Style           string `xml:"style,attr"`
 	TransformString string `xml:"transform,attr"`
@@ -75,7 +75,7 @@ func (p *Path) Parse() chan Segment {
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, *p.group.Transform)
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 	p.Segments = make(chan Segment)
-	l, _ := gl.Lex(fmt.Sprint(p.Id), p.D)
+	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
 	pdp.lex = *l
 	go func() {
 		defer close(p.Segments)
