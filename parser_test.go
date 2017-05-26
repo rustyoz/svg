@@ -1,6 +1,7 @@
 package svg
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/cheekybits/is"
@@ -20,6 +21,10 @@ func TestParse(t *testing.T) {
 	is := is.New(t)
 
 	svg, err := ParseSvg(testSvg, "test", 0)
+	is.NoErr(err)
+	is.NotNil(svg)
+
+	svg, err = ParseSvgFromReader(strings.NewReader(testSvg), "test", 0)
 	is.NoErr(err)
 	is.NotNil(svg)
 }
