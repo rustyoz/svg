@@ -9,8 +9,11 @@ import (
 	mt "github.com/rustyoz/Mtransform"
 )
 
+// Tuple is an X,Y coordinate
 type Tuple [2]float64
 
+// Svg represents an SVG file containing at least a top level group or a
+// number of Paths
 type Svg struct {
 	Title     string  `xml:"title"`
 	Groups    []Group `xml:"g"`
@@ -20,6 +23,7 @@ type Svg struct {
 	scale     float64
 }
 
+// Group represents an SVG group (usually located in a 'g' XML element)
 type Group struct {
 	ID              string
 	Stroke          string
@@ -33,7 +37,7 @@ type Group struct {
 	Owner           *Svg
 }
 
-// Implements encoding.xml.Unmarshaler interface
+// UnmarshalXML implements the encoding.xml.Unmarshaler interface
 func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
@@ -92,6 +96,7 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 	}
 }
 
+// ParseSvg parses an SVG string into an SVG struct
 func ParseSvg(str string, name string, scale float64) (*Svg, error) {
 	var svg Svg
 	svg.Name = name
@@ -119,6 +124,7 @@ func ParseSvg(str string, name string, scale float64) (*Svg, error) {
 	return &svg, nil
 }
 
+// ParseSvgFromReader parses an SVG struct from an io.Reader
 func ParseSvgFromReader(r io.Reader, name string, scale float64) (*Svg, error) {
 	var svg Svg
 	svg.Name = name
@@ -147,6 +153,7 @@ func ParseSvgFromReader(r io.Reader, name string, scale float64) (*Svg, error) {
 	return &svg, nil
 }
 
+// SetOwner sets the owner of a SVG Group
 func (g *Group) SetOwner(svg *Svg) {
 	g.Owner = svg
 	for _, gn := range g.Elements {

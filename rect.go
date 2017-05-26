@@ -2,6 +2,7 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
+// Rect is an SVG XML rect element
 type Rect struct {
 	ID        string `xml:"id,attr"`
 	Width     string `xml:"width,attr"`

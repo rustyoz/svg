@@ -2,8 +2,7 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
-// Polygon
-// Closed shape of straight line segments
+// Polygon is a closed shape of straight line segments
 type Polygon struct {
 	ID        string `xml:"id,attr"`
 	Transform string `xml:"transform,attr"`

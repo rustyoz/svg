@@ -2,6 +2,7 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
+// Ellipse is an SVG ellipse XML element
 type Ellipse struct {
 	ID        string `xml:"id,attr"`
 	Transform string `xml:"transform,attr"`

@@ -8,6 +8,7 @@ import (
 	gl "github.com/rustyoz/genericlexer"
 )
 
+// Path is an SVG XML path element
 type Path struct {
 	ID              string `xml:"id,attr"`
 	D               string `xml:"d,attr"`
@@ -20,9 +21,9 @@ type Path struct {
 	group           *Group
 }
 
-// Segment
-// A segment of a path that contains a list of connected points, its stroke Width and if the segment forms a closed loop.
-// Points are defined in world space after any matrix transformation is applied.
+// A Segment of a path that contains a list of connected points, its
+// stroke Width and if the segment forms a closed loop.  Points are
+// defined in world space after any matrix transformation is applied.
 type Segment struct {
 	Width  float64
 	Closed bool
@@ -60,8 +61,8 @@ func newPathDParse() *pathDescriptionParser {
 	return pdp
 }
 
-// Parse()
-// interprets path description, transform and style atttributes to create a channel of segments.
+// Parse interprets path description, transform and style atttributes to
+// create a channel of segments.
 func (p *Path) Parse() chan Segment {
 	p.parseStyle()
 	pdp := newPathDParse()
@@ -105,6 +106,9 @@ func (p *Path) Parse() chan Segment {
 	return p.Segments
 }
 
+// ParseDrawingInstructions returns a channel of
+// DrawingInstruction. Those should be used to pass to a path drawing
+// library (like Cairo or something comparable)
 func (p *Path) ParseDrawingInstructions() chan DrawingInstruction {
 	p.parseStyle()
 	pdp := newPathDParse()

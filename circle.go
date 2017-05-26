@@ -2,6 +2,7 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
+// Circle is an SVG circle element
 type Circle struct {
 	ID        string `xml:"id,attr"`
 	Transform string `xml:"transform,attr"`

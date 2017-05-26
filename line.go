@@ -2,6 +2,7 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
+// Line is an SVG XML line element
 type Line struct {
 	ID        string `xml:"id,attr"`
 	Transform string `xml:"transform,attr"`

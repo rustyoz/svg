@@ -1,7 +1,10 @@
 package svg
 
+// InstructionType tells our path drawing library which function it has
+// to call
 type InstructionType int
 
+// These are instruction types that we use with our path drawing library
 const (
 	PathInstruction InstructionType = iota
 	MoveInstruction
