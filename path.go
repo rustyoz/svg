@@ -16,6 +16,7 @@ type Path struct {
 	properties      map[string]string
 	strokeWidth     float64
 	Segments        chan Segment
+	instructions    chan DrawingInstruction
 	group           *Group
 }
 
@@ -50,6 +51,7 @@ type pathDescriptionParser struct {
 	transform      mt.Transform
 	svg            *Svg
 	currentsegment *Segment
+	currentinstr   *DrawingInstruction
 }
 
 func newPathDParse() *pathDescriptionParser {
@@ -103,8 +105,56 @@ func (p *Path) Parse() chan Segment {
 	return p.Segments
 }
 
+func (p *Path) ParseDrawingInstructions() chan DrawingInstruction {
+	p.parseStyle()
+	pdp := newPathDParse()
+	pdp.p = p
+	if p.group == nil {
+		p.group = new(Group)
+		temp := mt.Identity()
+		p.group.Transform = &temp
+	}
+	pdp.svg = p.group.Owner
+	pathTransform := mt.Identity()
+	if p.TransformString != "" {
+		pt, err := parseTransform(p.TransformString)
+		if err == nil {
+			pathTransform = pt
+		}
+	}
+	pdp.transform = mt.MultiplyTransforms(pdp.transform, *p.group.Transform)
+	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
+
+	p.instructions = make(chan DrawingInstruction, 100)
+
+	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
+	pdp.lex = *l
+	go func() {
+		defer close(p.instructions)
+		for {
+			i := pdp.lex.NextItem()
+			switch {
+			case i.Type == gl.ItemError:
+				return
+			case i.Type == gl.ItemEOS:
+				return
+			case i.Type == gl.ItemLetter:
+				err := pdp.parseCommand(l, i)
+				if err != nil {
+					fmt.Printf("parseCommand error: %s\n", err)
+				}
+
+			default:
+			}
+		}
+	}()
+
+	return p.instructions
+}
+
 func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 	var err error
+
 	switch i.Value {
 	case "M":
 		err = pdp.parseMoveToAbs()
@@ -126,8 +176,8 @@ func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 	case "z":
 		err = pdp.parseClose()
 	}
-	return err
 
+	return err
 }
 
 func (pdp *pathDescriptionParser) parseMoveToAbs() error {
@@ -166,17 +216,19 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.currentsegment = &s
-
+		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	}
 
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s := pdp.p.newSegment([2]float64{x, y})
+		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			s.addPoint([2]float64{x, y})
+			pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 		pdp.currentsegment = s
 	}
@@ -238,16 +290,19 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 		s.Width = pdp.p.strokeWidth * pdp.svg.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
+		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		pdp.currentsegment = &s
 	}
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
+		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x += nt[0]
 			pdp.y += nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
+			pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -406,6 +461,17 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 		cb.controlpoints[3][0] = pdp.x
 		cb.controlpoints[3][1] = pdp.y
 
+		c1x, c1y := pdp.transform.Apply(pdp.x+tuples[j*3][0], pdp.y+tuples[j*3][1])
+		c2x, c2y := pdp.transform.Apply(pdp.x+tuples[j*3+1][0], pdp.y+tuples[j*3+1][1])
+		tx, ty := pdp.transform.Apply(pdp.x+tuples[j*3+2][0], pdp.y+tuples[j*3+2][1])
+
+		pdp.p.instructions <- DrawingInstruction{
+			Kind: CurveInstruction,
+			C1:   &Tuple{c1x, c1y},
+			C2:   &Tuple{c2x, c2y},
+			T:    &Tuple{tx, ty},
+		}
+
 		vertices := cb.recursiveInterpolate(10, 0)
 		for _, v := range vertices {
 			x, y = pdp.transform.Apply(v[0], v[1])
@@ -417,12 +483,16 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 }
 
 func (pdp *pathDescriptionParser) parseCurveToAbs() error {
-	var tuples []Tuple
+	var (
+		tuples      []Tuple
+		instrTuples []Tuple
+	)
+
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
 		t, err := parseTuple(&pdp.lex)
 		if err != nil {
-			return fmt.Errorf("Error Passing CurveToRel\n%s", err)
+			return fmt.Errorf("Error parsing CurveToRel\n%s", err)
 		}
 		tuples = append(tuples, t)
 		pdp.lex.ConsumeWhiteSpace()
@@ -435,12 +505,26 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 		var cb cubicBezier
 		cb.controlpoints[0][0] = pdp.x
 		cb.controlpoints[0][1] = pdp.y
+
+		instrTuples = append(instrTuples, Tuple{x, y})
+
 		for i, nt := range tuples[j*3 : (j+1)*3] {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			cb.controlpoints[i+1][0] = pdp.x
 			cb.controlpoints[i+1][1] = pdp.y
+
+			tx, ty := pdp.transform.Apply(pdp.x, pdp.y)
+			instrTuples = append(instrTuples, Tuple{tx, ty})
 		}
+
+		pdp.p.instructions <- DrawingInstruction{
+			Kind: CurveInstruction,
+			C1:   &instrTuples[0],
+			C2:   &instrTuples[1],
+			T:    &instrTuples[2],
+		}
+
 		vertices := cb.recursiveInterpolate(10, 0)
 		for _, v := range vertices {
 			x, y = pdp.transform.Apply(v[0], v[1])
