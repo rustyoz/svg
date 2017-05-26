@@ -9,6 +9,7 @@ const (
 	CurveInstruction
 	LineInstruction
 	HLineInstruction
+	CloseInstruction
 )
 
 // DrawingInstruction contains enough information that a simple drawing

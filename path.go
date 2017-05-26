@@ -250,11 +250,15 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
+
+		pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
+			pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -324,11 +328,15 @@ func (pdp *pathDescriptionParser) parseLineToRel() error {
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
+
+		pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+
 		for _, nt := range tuples {
 			pdp.x += nt[0]
 			pdp.y += nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
+			pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -348,9 +356,11 @@ func (pdp *pathDescriptionParser) parseHLineToAbs() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
+	pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	pdp.x = n
 	x, y = pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
+	pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 	return nil
 }
@@ -368,8 +378,10 @@ func (pdp *pathDescriptionParser) parseHLineToRel() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
+	pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	pdp.x += n
 	x, y = pdp.transform.Apply(pdp.x, pdp.y)
+	pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 	pdp.currentsegment.addPoint([2]float64{x, y})
 
 	return nil
@@ -403,6 +415,9 @@ func (pdp *pathDescriptionParser) parseClose() error {
 		pdp.currentsegment.Closed = true
 		pdp.p.Segments <- *pdp.currentsegment
 		pdp.currentsegment = nil
+
+		pdp.p.instructions <- DrawingInstruction{Kind: CloseInstruction}
+
 		return nil
 	}
 	return fmt.Errorf("Error Parsing closepath command, no previous path")
