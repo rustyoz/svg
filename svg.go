@@ -14,6 +14,7 @@ type Tuple [2]float64
 type Svg struct {
 	Title     string  `xml:"title"`
 	Groups    []Group `xml:"g"`
+	Paths     []Path  `xml:"path"`
 	Name      string
 	Transform *mt.Transform
 	scale     float64

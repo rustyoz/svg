@@ -64,6 +64,11 @@ func (p *Path) Parse() chan Segment {
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
+	if p.group == nil {
+		p.group = new(Group)
+		temp := mt.Identity()
+		p.group.Transform = &temp
+	}
 	pdp.svg = p.group.Owner
 	pathTransform := mt.Identity()
 	if p.TransformString != "" {
@@ -151,6 +156,12 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 	} else {
 
 		var s Segment
+		if pdp.p.group.Owner == nil {
+			pdp.p.group.Owner = &Svg{scale: 1}
+		}
+		if pdp.p.strokeWidth == 0 {
+			pdp.p.strokeWidth = 1
+		}
 		s.Width = pdp.p.strokeWidth * pdp.p.group.Owner.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
