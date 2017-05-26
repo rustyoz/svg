@@ -90,7 +90,7 @@ func (p *Path) Parse() chan Segment {
 				}
 				return
 			case i.Type == gl.ItemLetter:
-				parseCommand(pdp, l, i)
+				pdp.parseCommand(l, i)
 			default:
 			}
 		}
@@ -98,34 +98,34 @@ func (p *Path) Parse() chan Segment {
 	return p.Segments
 }
 
-func parseCommand(pdp *pathDescriptionParser, l *gl.Lexer, i gl.Item) error {
+func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 	var err error
 	switch i.Value {
 	case "M":
-		err = parseMoveToAbs(pdp)
+		err = pdp.parseMoveToAbs()
 	case "m":
-		err = parseMoveToRel(pdp)
+		err = pdp.parseMoveToRel()
 	case "c":
-		err = parseCurveToRel(pdp)
+		err = pdp.parseCurveToRel()
 	case "C":
-		err = parseCurveToAbs(pdp)
+		err = pdp.parseCurveToAbs()
 	case "L":
-		err = parseLineToAbs(pdp)
+		err = pdp.parseLineToAbs()
 	case "l":
-		err = parseLineToRel(pdp)
+		err = pdp.parseLineToRel()
 	case "H":
-		err = parseHLineToAbs(pdp)
+		err = pdp.parseHLineToAbs()
 	case "h":
-		err = parseHLineToRel(pdp)
+		err = pdp.parseHLineToRel()
 	case "Z":
 	case "z":
-		err = parseClose(pdp)
+		err = pdp.parseClose()
 	}
 	return err
 
 }
 
-func parseMoveToAbs(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
 		return fmt.Errorf("Error Passing MoveToAbs Expected Tuple\n%s", err)
@@ -173,7 +173,7 @@ func parseMoveToAbs(pdp *pathDescriptionParser) error {
 
 }
 
-func parseLineToAbs(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseLineToAbs() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -199,7 +199,7 @@ func parseLineToAbs(pdp *pathDescriptionParser) error {
 
 }
 
-func parseMoveToRel(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseMoveToRel() error {
 	pdp.lex.ConsumeWhiteSpace()
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
@@ -243,7 +243,7 @@ func parseMoveToRel(pdp *pathDescriptionParser) error {
 	return nil
 }
 
-func parseLineToRel(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseLineToRel() error {
 
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
@@ -269,7 +269,7 @@ func parseLineToRel(pdp *pathDescriptionParser) error {
 	return nil
 }
 
-func parseHLineToAbs(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseHLineToAbs() error {
 	pdp.lex.ConsumeWhiteSpace()
 	var n float64
 	var err error
@@ -289,7 +289,7 @@ func parseHLineToAbs(pdp *pathDescriptionParser) error {
 	return nil
 }
 
-func parseHLineToRel(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseHLineToRel() error {
 	pdp.lex.ConsumeWhiteSpace()
 	var n float64
 	var err error
@@ -310,7 +310,7 @@ func parseHLineToRel(pdp *pathDescriptionParser) error {
 
 }
 
-func parseVLineToAbs(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseVLineToAbs() error {
 	pdp.lex.ConsumeWhiteSpace()
 	var n float64
 	var err error
@@ -330,7 +330,7 @@ func parseVLineToAbs(pdp *pathDescriptionParser) error {
 	return nil
 }
 
-func parseClose(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseClose() error {
 	pdp.lex.ConsumeWhiteSpace()
 	if pdp.currentsegment != nil {
 		pdp.currentsegment.addPoint(pdp.currentsegment.Points[0])
@@ -343,7 +343,7 @@ func parseClose(pdp *pathDescriptionParser) error {
 
 }
 
-func parseVLineToRel(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseVLineToRel() error {
 	pdp.lex.ConsumeWhiteSpace()
 	var n float64
 	var err error
@@ -364,7 +364,7 @@ func parseVLineToRel(pdp *pathDescriptionParser) error {
 
 }
 
-func parseCurveToRel(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseCurveToRel() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -405,7 +405,7 @@ func parseCurveToRel(pdp *pathDescriptionParser) error {
 	return nil
 }
 
-func parseCurveToAbs(pdp *pathDescriptionParser) error {
+func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
