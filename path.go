@@ -105,10 +105,14 @@ func (p *Path) Parse() chan Segment {
 	return p.Segments
 }
 
-// ParseDrawingInstructions returns a channel of
-// DrawingInstruction. Those should be used to pass to a path drawing
-// library (like Cairo or something comparable)
-func (p *Path) ParseDrawingInstructions() chan DrawingInstruction {
+// ParseDrawingInstructions returns two channels. One is a channel of
+// Segments identical to the one returned by Parse() and the other one
+// is a channel of DrawingInstruction. The latter should be used to pass
+// to a path drawing library (like Cairo or something comparable)
+//
+// Note that you have to drain both channels even if you don't need the
+// results for one. Otherwise we will get a deadlock.
+func (p *Path) ParseDrawingInstructions() (chan Segment, chan DrawingInstruction) {
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
@@ -129,30 +133,38 @@ func (p *Path) ParseDrawingInstructions() chan DrawingInstruction {
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 
 	p.instructions = make(chan DrawingInstruction, 100)
-
+	p.Segments = make(chan Segment)
 	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
+
 	pdp.lex = *l
 	go func() {
 		defer close(p.instructions)
+		defer close(p.Segments)
+		var count int
 		for {
 			i := pdp.lex.NextItem()
+			count++
 			switch {
 			case i.Type == gl.ItemError:
 				return
 			case i.Type == gl.ItemEOS:
+				if pdp.currentsegment != nil {
+					p.Segments <- *pdp.currentsegment
+				}
 				return
 			case i.Type == gl.ItemLetter:
 				err := pdp.parseCommand(l, i)
 				if err != nil {
-					fmt.Printf("parseCommand error: %s\n", err)
+					fmt.Printf("ParseCommand error: %s\n", err)
 				}
 
 			default:
+				fmt.Printf("Default invoked: %d\n", count)
 			}
 		}
 	}()
 
-	return p.instructions
+	return p.Segments, p.instructions
 }
 
 func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
@@ -413,6 +425,7 @@ func (pdp *pathDescriptionParser) parseVLineToAbs() error {
 
 func (pdp *pathDescriptionParser) parseClose() error {
 	pdp.lex.ConsumeWhiteSpace()
+
 	if pdp.currentsegment != nil {
 		pdp.currentsegment.addPoint(pdp.currentsegment.Points[0])
 		pdp.currentsegment.Closed = true
@@ -420,11 +433,9 @@ func (pdp *pathDescriptionParser) parseClose() error {
 		pdp.currentsegment = nil
 
 		pdp.p.instructions <- DrawingInstruction{Kind: CloseInstruction}
-
-		return nil
 	}
-	return fmt.Errorf("Error Parsing closepath command, no previous path")
 
+	return fmt.Errorf("Error Parsing closepath command, no previous path")
 }
 
 func (pdp *pathDescriptionParser) parseVLineToRel() error {
