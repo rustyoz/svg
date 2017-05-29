@@ -52,7 +52,6 @@ type pathDescriptionParser struct {
 	transform      mt.Transform
 	svg            *Svg
 	currentsegment *Segment
-	currentinstr   *DrawingInstruction
 }
 
 func newPathDParse() *pathDescriptionParser {
