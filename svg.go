@@ -15,9 +15,10 @@ type Tuple [2]float64
 // Svg represents an SVG file containing at least a top level group or a
 // number of Paths
 type Svg struct {
-	Title     string  `xml:"title"`
-	Groups    []Group `xml:"g"`
-	Paths     []Path  `xml:"path"`
+	Title     string   `xml:"title"`
+	Groups    []Group  `xml:"g"`
+	Paths     []Path   `xml:"path"`
+	Circles   []Circle `xml:"circle"`
 	Name      string
 	Transform *mt.Transform
 	scale     float64
@@ -80,6 +81,8 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 				elementStruct = &Group{Parent: g, Owner: g.Owner, Transform: mt.NewTransform()}
 			case "rect":
 				elementStruct = &Rect{group: g}
+			case "circle":
+				elementStruct = &Circle{group: g}
 			case "path":
 				elementStruct = &Path{group: g, StrokeWidth: 1}
 
