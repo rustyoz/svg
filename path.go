@@ -19,7 +19,7 @@ type Path struct {
 	Fill            string  `xml:"fill,attr"`
 	Stroke          string  `xml:"stroke,attr"`
 	Segments        chan Segment
-	instructions    chan DrawingInstruction
+	instructions    chan *DrawingInstruction
 	group           *Group
 }
 
@@ -114,7 +114,7 @@ func (p *Path) Parse() chan Segment {
 //
 // Note that you have to drain both channels even if you don't need the
 // results for one. Otherwise we will get a deadlock.
-func (p *Path) ParseDrawingInstructions() (chan Segment, chan DrawingInstruction) {
+func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
@@ -134,7 +134,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan DrawingInstruction
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, *p.group.Transform)
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 
-	p.instructions = make(chan DrawingInstruction, 100)
+	p.instructions = make(chan *DrawingInstruction, 100)
 	p.Segments = make(chan Segment)
 	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
 
@@ -233,19 +233,19 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.currentsegment = &s
-		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	}
 
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s := pdp.p.newSegment([2]float64{x, y})
-		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			s.addPoint([2]float64{x, y})
-			pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 		pdp.currentsegment = s
 	}
@@ -268,14 +268,14 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
 
-		pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
-			pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -311,19 +311,19 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 		s.Width = pdp.p.StrokeWidth * pdp.svg.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
-		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		pdp.currentsegment = &s
 	}
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
-		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x += nt[0]
 			pdp.y += nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
-			pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -346,14 +346,14 @@ func (pdp *pathDescriptionParser) parseLineToRel() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
 
-		pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 		for _, nt := range tuples {
 			pdp.x += nt[0]
 			pdp.y += nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
-			pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -373,11 +373,11 @@ func (pdp *pathDescriptionParser) parseHLineToAbs() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
-	pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	pdp.x = n
 	x, y = pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
-	pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+	pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 	return nil
 }
@@ -395,10 +395,10 @@ func (pdp *pathDescriptionParser) parseHLineToRel() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.currentsegment.addPoint([2]float64{x, y})
-	pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	pdp.x += n
 	x, y = pdp.transform.Apply(pdp.x, pdp.y)
-	pdp.p.instructions <- DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+	pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 	pdp.currentsegment.addPoint([2]float64{x, y})
 
 	return nil
@@ -434,7 +434,7 @@ func (pdp *pathDescriptionParser) parseClose() error {
 		pdp.p.Segments <- *pdp.currentsegment
 		pdp.currentsegment = nil
 
-		pdp.p.instructions <- DrawingInstruction{Kind: CloseInstruction}
+		pdp.p.instructions <- &DrawingInstruction{Kind: CloseInstruction}
 	}
 
 	return fmt.Errorf("Error Parsing closepath command, no previous path")
@@ -496,7 +496,7 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 		c2x, c2y := pdp.transform.Apply(pdp.x+tuples[j*3+1][0], pdp.y+tuples[j*3+1][1])
 		tx, ty := pdp.transform.Apply(pdp.x+tuples[j*3+2][0], pdp.y+tuples[j*3+2][1])
 
-		pdp.p.instructions <- DrawingInstruction{
+		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
 			C1:   &Tuple{c1x, c1y},
 			C2:   &Tuple{c2x, c2y},
@@ -549,7 +549,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 			instrTuples = append(instrTuples, Tuple{tx, ty})
 		}
 
-		pdp.p.instructions <- DrawingInstruction{
+		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
 			C1:   &instrTuples[0],
 			C2:   &instrTuples[1],

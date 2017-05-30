@@ -13,7 +13,7 @@ import (
 // instructions from them. All SVG elements should implement this
 // interface.
 type DrawingInstructionParser interface {
-	ParseDrawingInstructions() (chan Segment, chan DrawingInstruction)
+	ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction)
 }
 
 // Tuple is an X,Y coordinate
