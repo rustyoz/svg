@@ -18,5 +18,10 @@ type Circle struct {
 // ParseDrawingInstructions implements the DrawingInstructionParser
 // interface
 func (c *Circle) ParseDrawingInstructions() (chan Segment, chan DrawingInstruction) {
-	return make(chan Segment), make(chan DrawingInstruction)
+	seg, draw := make(chan Segment), make(chan DrawingInstruction)
+
+	defer close(seg)
+	defer close(draw)
+
+	return seg, draw
 }
