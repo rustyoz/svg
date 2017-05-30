@@ -9,16 +9,22 @@ import (
 	mt "github.com/rustyoz/Mtransform"
 )
 
+// DrawingInstructionParser allow getting segments and drawing
+// instructions from them. All SVG elements should implement this
+// interface.
+type DrawingInstructionParser interface {
+	ParseDrawingInstructions() (chan Segment, chan DrawingInstruction)
+}
+
 // Tuple is an X,Y coordinate
 type Tuple [2]float64
 
 // Svg represents an SVG file containing at least a top level group or a
 // number of Paths
 type Svg struct {
-	Title     string   `xml:"title"`
-	Groups    []Group  `xml:"g"`
-	Paths     []Path   `xml:"path"`
-	Circles   []Circle `xml:"circle"`
+	Title     string  `xml:"title"`
+	Groups    []Group `xml:"g"`
+	Elements  []DrawingInstructionParser
 	Name      string
 	Transform *mt.Transform
 	scale     float64
@@ -89,12 +95,57 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 			}
 
 			if err = decoder.DecodeElement(elementStruct, &tok); err != nil {
-				return fmt.Errorf("Error decoding element of Group\n%s", err)
+				return fmt.Errorf("error decoding element of Group: %s", err)
 			}
 			g.Elements = append(g.Elements, elementStruct)
 
 		case xml.EndElement:
 			return nil
+		}
+	}
+}
+
+// UnmarshalXML implements the encoding.xml.Unmarshaler interface
+func (s *Svg) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+
+		switch tok := token.(type) {
+		case xml.StartElement:
+			var dip DrawingInstructionParser
+
+			switch tok.Name.Local {
+			case "g":
+				g := &Group{Owner: s, Transform: mt.NewTransform()}
+				if err = decoder.DecodeElement(g, &tok); err != nil {
+					return fmt.Errorf("error decoding group element within SVG struct: %s", err)
+				}
+				s.Groups = append(s.Groups, *g)
+				continue
+			case "rect":
+				dip = &Rect{}
+			case "circle":
+				dip = &Circle{}
+			case "path":
+				dip = &Path{}
+
+			default:
+				continue
+			}
+
+			if err = decoder.DecodeElement(dip, &tok); err != nil {
+				return fmt.Errorf("error decoding element of SVG struct: %s", err)
+			}
+
+			s.Elements = append(s.Elements, dip)
+
+		case xml.EndElement:
+			if tok.Name.Local == "svg" {
+				return nil
+			}
 		}
 	}
 }

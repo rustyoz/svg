@@ -14,3 +14,9 @@ type Circle struct {
 	transform mt.Transform
 	group     *Group
 }
+
+// ParseDrawingInstructions implements the DrawingInstructionParser
+// interface
+func (c *Circle) ParseDrawingInstructions() (chan Segment, chan DrawingInstruction) {
+	return make(chan Segment), make(chan DrawingInstruction)
+}
