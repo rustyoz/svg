@@ -15,7 +15,9 @@ type Path struct {
 	Style           string `xml:"style,attr"`
 	TransformString string `xml:"transform,attr"`
 	properties      map[string]string
-	strokeWidth     float64
+	StrokeWidth     float64 `xml:"stroke-width,attr"`
+	Fill            string  `xml:"fill,attr"`
+	Stroke          string  `xml:"stroke,attr"`
 	Segments        chan Segment
 	instructions    chan DrawingInstruction
 	group           *Group
@@ -32,7 +34,7 @@ type Segment struct {
 
 func (p Path) newSegment(start [2]float64) *Segment {
 	var s Segment
-	s.Width = p.strokeWidth * p.group.Owner.scale
+	s.Width = p.StrokeWidth * p.group.Owner.scale
 	s.Points = append(s.Points, start)
 	return &s
 }
@@ -224,10 +226,10 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		if pdp.p.group.Owner == nil {
 			pdp.p.group.Owner = &Svg{scale: 1}
 		}
-		if pdp.p.strokeWidth == 0 {
-			pdp.p.strokeWidth = 1
+		if pdp.p.StrokeWidth == 0 {
+			pdp.p.StrokeWidth = 1
 		}
-		s.Width = pdp.p.strokeWidth * pdp.p.group.Owner.scale
+		s.Width = pdp.p.StrokeWidth * pdp.p.group.Owner.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.currentsegment = &s
@@ -306,7 +308,7 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 		pdp.currentsegment = nil
 	} else {
 		var s Segment
-		s.Width = pdp.p.strokeWidth * pdp.svg.scale
+		s.Width = pdp.p.StrokeWidth * pdp.svg.scale
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.p.instructions <- DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
@@ -571,7 +573,7 @@ func (p *Path) parseStyle() {
 		case "stroke-width":
 			sw, ok := strconv.ParseFloat(val, 64)
 			if ok == nil {
-				p.strokeWidth = sw
+				p.StrokeWidth = sw
 			}
 
 		}

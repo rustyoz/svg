@@ -81,7 +81,7 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 			case "rect":
 				elementStruct = &Rect{group: g}
 			case "path":
-				elementStruct = &Path{group: g, strokeWidth: 1}
+				elementStruct = &Path{group: g, StrokeWidth: 1}
 
 			}
 
