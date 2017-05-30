@@ -27,6 +27,7 @@ type DrawingInstruction struct {
 	C2          *Tuple
 	T           *Tuple
 	Radius      *float64
-	Fill        *string
 	StrokeWidth *float64
+	Fill        *string
+	Stroke      *string
 }
