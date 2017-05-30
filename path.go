@@ -198,6 +198,8 @@ func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 }
 
 func (pdp *pathDescriptionParser) parseMoveToAbs() error {
+	var tuples []Tuple
+
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
 		return fmt.Errorf("Error Passing MoveToAbs Expected Tuple\n%s", err)
@@ -206,7 +208,15 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 	pdp.x = t[0]
 	pdp.y = t[1]
 
-	var tuples []Tuple
+	if pdp.p.group.Owner == nil {
+		pdp.p.group.Owner = &Svg{scale: 1}
+	}
+	if pdp.p.StrokeWidth == 0 {
+		pdp.p.StrokeWidth = 1
+	}
+
+	scaledStroke := pdp.p.StrokeWidth * pdp.p.group.Owner.scale
+
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
 		t, err := parseTuple(&pdp.lex)
@@ -221,31 +231,24 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		pdp.p.Segments <- *pdp.currentsegment
 		pdp.currentsegment = nil
 	} else {
-
 		var s Segment
-		if pdp.p.group.Owner == nil {
-			pdp.p.group.Owner = &Svg{scale: 1}
-		}
-		if pdp.p.StrokeWidth == 0 {
-			pdp.p.StrokeWidth = 1
-		}
-		s.Width = pdp.p.StrokeWidth * pdp.p.group.Owner.scale
+		s.Width = scaledStroke
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.currentsegment = &s
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
 	}
 
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s := pdp.p.newSegment([2]float64{x, y})
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			s.addPoint([2]float64{x, y})
-			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
 		}
 		pdp.currentsegment = s
 	}
@@ -308,7 +311,9 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 		pdp.currentsegment = nil
 	} else {
 		var s Segment
-		s.Width = pdp.p.StrokeWidth * pdp.svg.scale
+		scaledStroke := pdp.p.StrokeWidth * pdp.svg.scale
+		s.Width = scaledStroke
+
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
