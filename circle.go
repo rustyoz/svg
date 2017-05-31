@@ -30,6 +30,8 @@ func (c *Circle) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruct
 			M:      &Tuple{c.Cx, c.Cy},
 			Radius: &c.Radius,
 		}
+
+		draw <- &DrawingInstruction{Kind: PaintInstruction}
 	}()
 
 	return seg, draw

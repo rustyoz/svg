@@ -13,6 +13,7 @@ const (
 	LineInstruction
 	HLineInstruction
 	CloseInstruction
+	PaintInstruction
 )
 
 // DrawingInstruction contains enough information that a simple drawing

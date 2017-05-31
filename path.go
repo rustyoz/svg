@@ -153,6 +153,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 				if pdp.currentsegment != nil {
 					p.Segments <- *pdp.currentsegment
 				}
+				pdp.p.instructions <- &DrawingInstruction{Kind: PaintInstruction}
 				return
 			case i.Type == gl.ItemLetter:
 				err := pdp.parseCommand(l, i)
