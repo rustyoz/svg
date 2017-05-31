@@ -6,8 +6,7 @@ type InstructionType int
 
 // These are instruction types that we use with our path drawing library
 const (
-	PathInstruction InstructionType = iota
-	MoveInstruction
+	MoveInstruction InstructionType = iota
 	CircleInstruction
 	CurveInstruction
 	LineInstruction
