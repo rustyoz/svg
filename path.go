@@ -543,8 +543,6 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 		cb.controlpoints[0][0] = pdp.x
 		cb.controlpoints[0][1] = pdp.y
 
-		instrTuples = append(instrTuples, Tuple{x, y})
-
 		for i, nt := range tuples[j*3 : (j+1)*3] {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
