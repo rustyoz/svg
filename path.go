@@ -153,9 +153,12 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 				if pdp.currentsegment != nil {
 					p.Segments <- *pdp.currentsegment
 				}
+
+				scaledStrokeWidth := p.StrokeWidth * pdp.p.group.Owner.scale
+
 				pdp.p.instructions <- &DrawingInstruction{
 					Kind:        PaintInstruction,
-					StrokeWidth: &p.StrokeWidth,
+					StrokeWidth: &scaledStrokeWidth,
 					Stroke:      &p.Stroke,
 					Fill:        &p.Fill,
 				}
