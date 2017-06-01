@@ -157,6 +157,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 					Kind:        PaintInstruction,
 					StrokeWidth: &p.StrokeWidth,
 					Stroke:      &p.Stroke,
+					Fill:        &p.Fill,
 				}
 				return
 			case i.Type == gl.ItemLetter:
