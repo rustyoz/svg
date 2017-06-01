@@ -153,7 +153,11 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 				if pdp.currentsegment != nil {
 					p.Segments <- *pdp.currentsegment
 				}
-				pdp.p.instructions <- &DrawingInstruction{Kind: PaintInstruction}
+				pdp.p.instructions <- &DrawingInstruction{
+					Kind:        PaintInstruction,
+					StrokeWidth: &p.StrokeWidth,
+					Stroke:      &p.Stroke,
+				}
 				return
 			case i.Type == gl.ItemLetter:
 				err := pdp.parseCommand(l, i)
@@ -237,19 +241,20 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s.addPoint([2]float64{x, y})
 		pdp.currentsegment = &s
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
+		//fmt.Printf("orig x %f y %f, applied x %f y %f\n", pdp.x, pdp.y, x, y)
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	}
 
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		s := pdp.p.newSegment([2]float64{x, y})
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			s.addPoint([2]float64{x, y})
-			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}, StrokeWidth: &scaledStroke}
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 		pdp.currentsegment = s
 	}

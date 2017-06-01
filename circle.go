@@ -31,7 +31,7 @@ func (c *Circle) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruct
 			Radius: &c.Radius,
 		}
 
-		draw <- &DrawingInstruction{Kind: PaintInstruction}
+		draw <- &DrawingInstruction{Kind: PaintInstruction, Fill: &c.Fill}
 	}()
 
 	return seg, draw
