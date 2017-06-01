@@ -501,9 +501,9 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 		cb.controlpoints[3][0] = pdp.x
 		cb.controlpoints[3][1] = pdp.y
 
-		c1x, c1y := pdp.transform.Apply(pdp.x+tuples[j*3][0], pdp.y+tuples[j*3][1])
-		c2x, c2y := pdp.transform.Apply(pdp.x+tuples[j*3+1][0], pdp.y+tuples[j*3+1][1])
-		tx, ty := pdp.transform.Apply(pdp.x+tuples[j*3+2][0], pdp.y+tuples[j*3+2][1])
+		c1x, c1y := pdp.transform.Apply(x+tuples[j*3][0], y+tuples[j*3][1])
+		c2x, c2y := pdp.transform.Apply(x+tuples[j*3+1][0], y+tuples[j*3+1][1])
+		tx, ty := pdp.transform.Apply(x+tuples[j*3+2][0], y+tuples[j*3+2][1])
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
