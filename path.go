@@ -277,7 +277,6 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
 
-		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 		for _, nt := range tuples {
 			pdp.x = nt[0]
