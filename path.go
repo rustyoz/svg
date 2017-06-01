@@ -195,8 +195,7 @@ func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 		err = pdp.parseHLineToAbs()
 	case "h":
 		err = pdp.parseHLineToRel()
-	case "Z":
-	case "z":
+	case "z", "Z":
 		err = pdp.parseClose()
 	}
 
@@ -445,10 +444,9 @@ func (pdp *pathDescriptionParser) parseClose() error {
 		pdp.currentsegment.Closed = true
 		pdp.p.Segments <- *pdp.currentsegment
 		pdp.currentsegment = nil
-
-		pdp.p.instructions <- &DrawingInstruction{Kind: CloseInstruction}
 	}
 
+	pdp.p.instructions <- &DrawingInstruction{Kind: CloseInstruction}
 	return fmt.Errorf("Error Parsing closepath command, no previous path")
 }
 
