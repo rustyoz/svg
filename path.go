@@ -327,7 +327,6 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 	if len(tuples) > 0 {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		for _, nt := range tuples {
 			pdp.x += nt[0]
 			pdp.y += nt[1]
