@@ -280,7 +280,6 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.currentsegment.addPoint([2]float64{x, y})
 
-
 		for _, nt := range tuples {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
@@ -536,6 +535,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 		}
 		tuples = append(tuples, t)
 		pdp.lex.ConsumeWhiteSpace()
+		pdp.lex.ConsumeComma()
 	}
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
