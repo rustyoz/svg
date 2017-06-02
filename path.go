@@ -16,7 +16,7 @@ type Path struct {
 	TransformString string `xml:"transform,attr"`
 	properties      map[string]string
 	StrokeWidth     float64 `xml:"stroke-width,attr"`
-	Fill            string  `xml:"fill,attr"`
+	Fill            *string `xml:"fill,attr"`
 	Stroke          string  `xml:"stroke,attr"`
 	Segments        chan Segment
 	instructions    chan *DrawingInstruction
@@ -160,7 +160,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 					Kind:        PaintInstruction,
 					StrokeWidth: &scaledStrokeWidth,
 					Stroke:      &p.Stroke,
-					Fill:        &p.Fill,
+					Fill:        p.Fill,
 				}
 				return
 			case i.Type == gl.ItemLetter:
