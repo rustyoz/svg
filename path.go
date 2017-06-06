@@ -170,7 +170,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 				}
 
 			default:
-				fmt.Printf("Default invoked: %d\n", count)
+				fmt.Printf("Default invoked: %d item %v\n", count, i)
 			}
 		}
 	}()
