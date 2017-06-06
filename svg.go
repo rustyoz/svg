@@ -22,12 +22,14 @@ type Tuple [2]float64
 // Svg represents an SVG file containing at least a top level group or a
 // number of Paths
 type Svg struct {
-	Title     string  `xml:"title"`
-	Groups    []Group `xml:"g"`
-	Elements  []DrawingInstructionParser
-	Name      string
-	Transform *mt.Transform
-	scale     float64
+	Title        string  `xml:"title"`
+	Groups       []Group `xml:"g"`
+	Elements     []DrawingInstructionParser
+	Name         string
+	Transform    *mt.Transform
+	scale        float64
+	instructions chan *DrawingInstruction
+	segments     chan Segment
 }
 
 // Group represents an SVG group (usually located in a 'g' XML element)
@@ -103,6 +105,55 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 			return nil
 		}
 	}
+}
+
+// ParseDrawingInstructions implements the DrawingInstructionParser interface
+//
+// This method makes it easier to get all the drawing instructions. Note
+// that the segments channel will never be closed. This shouldn't be an
+// issue because we just discard all instructions anyway but it's still
+// ugly.
+func (s *Svg) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
+	s.instructions = make(chan *DrawingInstruction, 100)
+	s.segments = make(chan Segment)
+
+	go func() {
+		defer close(s.instructions)
+		for _, e := range s.Elements {
+			segs, instrs := e.ParseDrawingInstructions()
+			go func() {
+				// drain the unneeded channel
+				for seg := range segs {
+					s.segments <- seg
+				}
+			}()
+			for is := range instrs {
+				s.instructions <- is
+			}
+		}
+
+		for _, g := range s.Groups {
+			for _, e := range g.Elements {
+				p, ok := e.(DrawingInstructionParser)
+				if !ok {
+					continue
+				}
+				segs, instrs := p.ParseDrawingInstructions()
+				go func() {
+					// drain the unneeded channel
+					for seg := range segs {
+						s.segments <- seg
+					}
+				}()
+
+				for is := range instrs {
+					s.instructions <- is
+				}
+			}
+		}
+	}()
+
+	return s.segments, s.instructions
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
