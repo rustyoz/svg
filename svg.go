@@ -39,11 +39,42 @@ type Group struct {
 	StrokeWidth     int32
 	Fill            string
 	FillRule        string
-	Elements        []interface{}
+	Elements        []DrawingInstructionParser
 	TransformString string
 	Transform       *mt.Transform // row, column
 	Parent          *Group
 	Owner           *Svg
+	instructions    chan *DrawingInstruction
+	segments        chan Segment
+}
+
+// ParseDrawingInstructions implements the DrawingInstructionParser interface
+//
+// This method makes it easier to get all the drawing instructions. Note
+// that the segments channel will never be closed. This shouldn't be an
+// issue because we just discard all instructions anyway but it's still
+// ugly.
+func (g *Group) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
+	g.instructions = make(chan *DrawingInstruction, 100)
+	g.segments = make(chan Segment)
+
+	go func() {
+		defer close(g.instructions)
+		for _, e := range g.Elements {
+			segs, instrs := e.ParseDrawingInstructions()
+			go func() {
+				// drain the unneeded channel
+				for seg := range segs {
+					g.segments <- seg
+				}
+			}()
+			for is := range instrs {
+				g.instructions <- is
+			}
+		}
+	}()
+
+	return g.segments, g.instructions
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
@@ -82,7 +113,7 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 
 		switch tok := token.(type) {
 		case xml.StartElement:
-			var elementStruct interface{}
+			var elementStruct DrawingInstructionParser
 
 			switch tok.Name.Local {
 			case "g":
@@ -133,22 +164,16 @@ func (s *Svg) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction
 		}
 
 		for _, g := range s.Groups {
-			for _, e := range g.Elements {
-				p, ok := e.(DrawingInstructionParser)
-				if !ok {
-					continue
+			segs, instrs := g.ParseDrawingInstructions()
+			go func() {
+				// drain the unneeded channel
+				for seg := range segs {
+					s.segments <- seg
 				}
-				segs, instrs := p.ParseDrawingInstructions()
-				go func() {
-					// drain the unneeded channel
-					for seg := range segs {
-						s.segments <- seg
-					}
-				}()
+			}()
 
-				for is := range instrs {
-					s.instructions <- is
-				}
+			for is := range instrs {
+				s.instructions <- is
 			}
 		}
 	}()
