@@ -445,7 +445,7 @@ func (pdp *pathDescriptionParser) parseClose() error {
 	}
 
 	pdp.p.instructions <- &DrawingInstruction{Kind: CloseInstruction}
-	return fmt.Errorf("Error Parsing closepath command, no previous path")
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseVLineToRel() error {
