@@ -263,13 +263,11 @@ func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 
-	if len(tuples) > 0 {
-		for _, nt := range tuples {
-			pdp.x = nt[0]
-			pdp.y = nt[1]
-			x, y = pdp.transform.Apply(pdp.x, pdp.y)
-			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
-		}
+	for _, nt := range tuples {
+		pdp.x = nt[0]
+		pdp.y = nt[1]
+		x, y = pdp.transform.Apply(pdp.x, pdp.y)
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	}
 
 	return nil
@@ -347,15 +345,11 @@ func (pdp *pathDescriptionParser) parseLineToAbsDI() error {
 		pdp.lex.ConsumeWhiteSpace()
 	}
 
-	if len(tuples) > 0 {
+	for _, nt := range tuples {
+		pdp.x = nt[0]
+		pdp.y = nt[1]
 		x, y := pdp.transform.Apply(pdp.x, pdp.y)
-
-		for _, nt := range tuples {
-			pdp.x = nt[0]
-			pdp.y = nt[1]
-			x, y = pdp.transform.Apply(pdp.x, pdp.y)
-			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
-		}
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 	}
 
 	return nil
@@ -413,13 +407,11 @@ func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 
-	if len(tuples) > 0 {
-		for _, nt := range tuples {
-			pdp.x += nt[0]
-			pdp.y += nt[1]
-			x, y = pdp.transform.Apply(pdp.x, pdp.y)
-			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
-		}
+	for _, nt := range tuples {
+		pdp.x += nt[0]
+		pdp.y += nt[1]
+		x, y = pdp.transform.Apply(pdp.x, pdp.y)
+		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 	}
 
 	return nil
