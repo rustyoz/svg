@@ -257,7 +257,7 @@ func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
 		pdp.x = nt[0]
 		pdp.y = nt[1]
 		x, y = pdp.transform.Apply(pdp.x, pdp.y)
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 	}
 
 	return nil
@@ -379,7 +379,7 @@ func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
 		pdp.x += nt[0]
 		pdp.y += nt[1]
 		x, y = pdp.transform.Apply(pdp.x, pdp.y)
-		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 	}
 
 	return nil
