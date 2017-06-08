@@ -1,6 +1,6 @@
 package svg
 
-import mt "github.com/rustyoz/Mtransform"
+import mt "github.com/smallpdf/Mtransform"
 
 // Circle is an SVG circle element
 type Circle struct {

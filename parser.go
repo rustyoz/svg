@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	mt "github.com/rustyoz/Mtransform"
-	gl "github.com/rustyoz/genericlexer"
+	mt "github.com/smallpdf/Mtransform"
+	gl "github.com/smallpdf/genericlexer"
 )
 
 func parseNumber(i gl.Item) (float64, error) {

@@ -1,6 +1,6 @@
 package svg
 
-import mt "github.com/rustyoz/Mtransform"
+import mt "github.com/smallpdf/Mtransform"
 
 // Ellipse is an SVG ellipse XML element
 type Ellipse struct {

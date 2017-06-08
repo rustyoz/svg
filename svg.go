@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	mt "github.com/rustyoz/Mtransform"
+	mt "github.com/smallpdf/Mtransform"
 )
 
 // DrawingInstructionParser allow getting segments and drawing
