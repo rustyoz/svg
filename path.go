@@ -402,7 +402,6 @@ func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
-	fmt.Printf("relDImove: x %f y %f\n", x, y)
 
 	for _, nt := range tuples {
 		pdp.x += nt[0]
@@ -637,8 +636,6 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		pdp.lex.ConsumeWhiteSpace()
 	}
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
-	fmt.Printf("relDICurve: x %f y %f\n", x, y)
-	fmt.Printf("relDICurve len tuples: %d\n", len(tuples))
 
 	for j := 0; j < len(tuples)/3; j++ {
 		c1x, c1y := pdp.transform.Apply(x+tuples[j*3][0], y+tuples[j*3][1])
@@ -655,8 +652,6 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		pdp.x += tuples[j*3+2][0]
 		pdp.y += tuples[j*3+2][1]
 		x, y = pdp.transform.Apply(pdp.x, pdp.y)
-
-		fmt.Printf("relDICurve tuples: c1x %f c1y %f\n", c1x, c1y)
 	}
 
 	return nil
