@@ -114,7 +114,7 @@ func (p *Path) Parse() chan Segment {
 //
 // Note that you have to drain both channels even if you don't need the
 // results for one. Otherwise we will get a deadlock.
-func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
+func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
@@ -135,13 +135,11 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 
 	p.instructions = make(chan *DrawingInstruction, 100)
-	p.Segments = make(chan Segment)
 	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
 
 	pdp.lex = *l
 	go func() {
 		defer close(p.instructions)
-		defer close(p.Segments)
 		var count int
 		for {
 			i := pdp.lex.NextItem()
@@ -150,10 +148,6 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 			case i.Type == gl.ItemError:
 				return
 			case i.Type == gl.ItemEOS:
-				if pdp.currentsegment != nil {
-					p.Segments <- *pdp.currentsegment
-				}
-
 				scaledStrokeWidth := p.StrokeWidth * pdp.p.group.Owner.scale
 
 				pdp.p.instructions <- &DrawingInstruction{
@@ -175,7 +169,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 		}
 	}()
 
-	return p.Segments, p.instructions
+	return p.instructions
 }
 
 func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
@@ -327,28 +321,6 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 	}
 	return nil
 
-}
-
-func (pdp *pathDescriptionParser) parseLineToAbsDI() error {
-	var tuples []Tuple
-	pdp.lex.ConsumeWhiteSpace()
-	for pdp.lex.PeekItem().Type == gl.ItemNumber {
-		t, err := parseTuple(&pdp.lex)
-		if err != nil {
-			return fmt.Errorf("Error Passing LineToAbs\n%s", err)
-		}
-		tuples = append(tuples, t)
-		pdp.lex.ConsumeWhiteSpace()
-	}
-
-	for _, nt := range tuples {
-		pdp.x = nt[0]
-		pdp.y = nt[1]
-		x, y := pdp.transform.Apply(pdp.x, pdp.y)
-		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
-	}
-
-	return nil
 }
 
 func (pdp *pathDescriptionParser) parseLineToAbs() error {

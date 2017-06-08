@@ -18,11 +18,10 @@ type Circle struct {
 
 // ParseDrawingInstructions implements the DrawingInstructionParser
 // interface
-func (c *Circle) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
-	seg, draw := make(chan Segment), make(chan *DrawingInstruction)
+func (c *Circle) ParseDrawingInstructions() chan *DrawingInstruction {
+	draw := make(chan *DrawingInstruction)
 
 	go func() {
-		defer close(seg)
 		defer close(draw)
 
 		draw <- &DrawingInstruction{
@@ -34,5 +33,5 @@ func (c *Circle) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruct
 		draw <- &DrawingInstruction{Kind: PaintInstruction, Fill: &c.Fill}
 	}()
 
-	return seg, draw
+	return draw
 }

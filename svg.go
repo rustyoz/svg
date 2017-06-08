@@ -13,7 +13,7 @@ import (
 // instructions from them. All SVG elements should implement this
 // interface.
 type DrawingInstructionParser interface {
-	ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction)
+	ParseDrawingInstructions() chan *DrawingInstruction
 }
 
 // Tuple is an X,Y coordinate
@@ -50,31 +50,21 @@ type Group struct {
 
 // ParseDrawingInstructions implements the DrawingInstructionParser interface
 //
-// This method makes it easier to get all the drawing instructions. Note
-// that the segments channel will never be closed. This shouldn't be an
-// issue because we just discard all instructions anyway but it's still
-// ugly.
-func (g *Group) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
-	g.instructions = make(chan *DrawingInstruction, 100)
-	g.segments = make(chan Segment)
+// This method makes it easier to get all the drawing instructions.
+func (g *Group) ParseDrawingInstructions() chan *DrawingInstruction {
+	g.instructions = make(chan *DrawingInstruction)
 
 	go func() {
 		defer close(g.instructions)
 		for _, e := range g.Elements {
-			segs, instrs := e.ParseDrawingInstructions()
-			go func() {
-				// drain the unneeded channel
-				for seg := range segs {
-					g.segments <- seg
-				}
-			}()
+			instrs := e.ParseDrawingInstructions()
 			for is := range instrs {
 				g.instructions <- is
 			}
 		}
 	}()
 
-	return g.segments, g.instructions
+	return g.instructions
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
@@ -140,45 +130,28 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 
 // ParseDrawingInstructions implements the DrawingInstructionParser interface
 //
-// This method makes it easier to get all the drawing instructions. Note
-// that the segments channel will never be closed. This shouldn't be an
-// issue because we just discard all instructions anyway but it's still
-// ugly.
-func (s *Svg) ParseDrawingInstructions() (chan Segment, chan *DrawingInstruction) {
+// This method makes it easier to get all the drawing instructions.
+func (s *Svg) ParseDrawingInstructions() chan *DrawingInstruction {
 	s.instructions = make(chan *DrawingInstruction, 100)
-	s.segments = make(chan Segment)
 
 	go func() {
 		defer close(s.instructions)
 		for _, e := range s.Elements {
-			segs, instrs := e.ParseDrawingInstructions()
-			go func() {
-				// drain the unneeded channel
-				for seg := range segs {
-					s.segments <- seg
-				}
-			}()
+			instrs := e.ParseDrawingInstructions()
 			for is := range instrs {
 				s.instructions <- is
 			}
 		}
 
 		for _, g := range s.Groups {
-			segs, instrs := g.ParseDrawingInstructions()
-			go func() {
-				// drain the unneeded channel
-				for seg := range segs {
-					s.segments <- seg
-				}
-			}()
-
+			instrs := g.ParseDrawingInstructions()
 			for is := range instrs {
 				s.instructions <- is
 			}
 		}
 	}()
 
-	return s.segments, s.instructions
+	return s.instructions
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
