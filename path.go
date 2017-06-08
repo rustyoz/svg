@@ -380,7 +380,6 @@ func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
 		pdp.y += nt[1]
 		x, y = pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
-		fmt.Printf("relDImove tuples: x %f y %f\n", x, y)
 	}
 
 	return nil
