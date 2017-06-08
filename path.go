@@ -217,16 +217,12 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 		err = pdp.parseCurveToRelDI()
 	case "C":
 		err = pdp.parseCurveToAbsDI()
-	case "L":
-		err = pdp.parseLineToAbsDI()
 	case "l":
 		err = pdp.parseLineToRelDI()
-	case "H":
-		err = pdp.parseHLineToAbs()
-	case "h":
-		err = pdp.parseHLineToRel()
 	case "z", "Z":
 		err = pdp.parseCloseDI()
+	default:
+		return fmt.Errorf("unknown command found in SVG: %s", err)
 	}
 
 	return err
@@ -406,12 +402,14 @@ func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
 
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+	fmt.Printf("relDImove: x %f y %f\n", x, y)
 
 	for _, nt := range tuples {
 		pdp.x += nt[0]
 		pdp.y += nt[1]
 		x, y = pdp.transform.Apply(pdp.x, pdp.y)
 		pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		fmt.Printf("relDImove tuples: x %f y %f\n", x, y)
 	}
 
 	return nil
@@ -639,14 +637,16 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		pdp.lex.ConsumeWhiteSpace()
 	}
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
+	fmt.Printf("relDICurve: x %f y %f\n", x, y)
+	fmt.Printf("relDICurve len tuples: %d\n", len(tuples))
 
 	for j := 0; j < len(tuples)/3; j++ {
 		pdp.x += tuples[j*3+2][0]
 		pdp.y += tuples[j*3+2][1]
 
-		c1x, c1y := pdp.transform.Apply(x+tuples[j*3][0], y+tuples[j*3][1])
-		c2x, c2y := pdp.transform.Apply(x+tuples[j*3+1][0], y+tuples[j*3+1][1])
-		tx, ty := pdp.transform.Apply(x+tuples[j*3+2][0], y+tuples[j*3+2][1])
+		c1x, c1y := pdp.transform.Apply(pdp.x+tuples[j*3][0], pdp.y+tuples[j*3][1])
+		c2x, c2y := pdp.transform.Apply(pdp.x+tuples[j*3+1][0], pdp.y+tuples[j*3+1][1])
+		tx, ty := pdp.transform.Apply(pdp.x+tuples[j*3+2][0], pdp.y+tuples[j*3+2][1])
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
@@ -654,6 +654,7 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 			C2:   &Tuple{c2x, c2y},
 			T:    &Tuple{tx, ty},
 		}
+		fmt.Printf("relDICurve tuples: c1x %f c1y %f\n", c1x, c1y)
 	}
 
 	return nil
