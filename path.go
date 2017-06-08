@@ -164,7 +164,7 @@ func (p *Path) ParseDrawingInstructions() (chan Segment, chan *DrawingInstructio
 				}
 				return
 			case i.Type == gl.ItemLetter:
-				err := pdp.parseCommand(l, i)
+				err := pdp.parseCommandDrawingInstructions(l, i)
 				if err != nil {
 					fmt.Printf("ParseCommand error: %s\n", err)
 				}
@@ -203,6 +203,76 @@ func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
 	}
 
 	return err
+}
+
+func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i gl.Item) error {
+	var err error
+
+	switch i.Value {
+	case "M":
+		err = pdp.parseMoveToAbsDI()
+	case "m":
+		err = pdp.parseMoveToRelDI()
+	case "c":
+		err = pdp.parseCurveToRelDI()
+	case "C":
+		err = pdp.parseCurveToAbsDI()
+	case "L":
+		err = pdp.parseLineToAbsDI()
+	case "l":
+		err = pdp.parseLineToRelDI()
+	case "H":
+		err = pdp.parseHLineToAbs()
+	case "h":
+		err = pdp.parseHLineToRel()
+	case "z", "Z":
+		err = pdp.parseCloseDI()
+	}
+
+	return err
+}
+
+func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
+	var tuples []Tuple
+
+	t, err := parseTuple(&pdp.lex)
+	if err != nil {
+		return fmt.Errorf("Error Passing MoveToAbs Expected Tuple\n%s", err)
+	}
+
+	pdp.x = t[0]
+	pdp.y = t[1]
+
+	if pdp.p.group.Owner == nil {
+		pdp.p.group.Owner = &Svg{scale: 1}
+	}
+	if pdp.p.StrokeWidth == 0 {
+		pdp.p.StrokeWidth = 1
+	}
+
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing MoveToAbs\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+
+	x, y := pdp.transform.Apply(pdp.x, pdp.y)
+	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+
+	if len(tuples) > 0 {
+		for _, nt := range tuples {
+			pdp.x = nt[0]
+			pdp.y = nt[1]
+			x, y = pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		}
+	}
+
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseMoveToAbs() error {
@@ -265,6 +335,32 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 
 }
 
+func (pdp *pathDescriptionParser) parseLineToAbsDI() error {
+	var tuples []Tuple
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing LineToAbs\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+
+	if len(tuples) > 0 {
+		x, y := pdp.transform.Apply(pdp.x, pdp.y)
+
+		for _, nt := range tuples {
+			pdp.x = nt[0]
+			pdp.y = nt[1]
+			x, y = pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		}
+	}
+
+	return nil
+}
+
 func (pdp *pathDescriptionParser) parseLineToAbs() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
@@ -291,6 +387,42 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 
 	return nil
 
+}
+
+func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
+	pdp.lex.ConsumeWhiteSpace()
+	t, err := parseTuple(&pdp.lex)
+	if err != nil {
+		return fmt.Errorf("Error Passing MoveToRel Expected First Tuple %s", err)
+	}
+
+	pdp.x += t[0]
+	pdp.y += t[1]
+
+	var tuples []Tuple
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing MoveToRel\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+
+	x, y := pdp.transform.Apply(pdp.x, pdp.y)
+	pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+
+	if len(tuples) > 0 {
+		for _, nt := range tuples {
+			pdp.x += nt[0]
+			pdp.y += nt[1]
+			x, y = pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		}
+	}
+
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseMoveToRel() error {
@@ -335,6 +467,32 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 			x, y = pdp.transform.Apply(pdp.x, pdp.y)
 			pdp.currentsegment.addPoint([2]float64{x, y})
 			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
+		}
+	}
+
+	return nil
+}
+
+func (pdp *pathDescriptionParser) parseLineToRelDI() error {
+	var tuples []Tuple
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing LineToRel\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+
+	if len(tuples) > 0 {
+		x, y := pdp.transform.Apply(pdp.x, pdp.y)
+
+		for _, nt := range tuples {
+			pdp.x += nt[0]
+			pdp.y += nt[1]
+			x, y = pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 		}
 	}
 
@@ -434,6 +592,14 @@ func (pdp *pathDescriptionParser) parseVLineToAbs() error {
 	return nil
 }
 
+func (pdp *pathDescriptionParser) parseCloseDI() error {
+	pdp.lex.ConsumeWhiteSpace()
+
+	pdp.p.instructions <- &DrawingInstruction{Kind: CloseInstruction}
+
+	return nil
+}
+
 func (pdp *pathDescriptionParser) parseClose() error {
 	pdp.lex.ConsumeWhiteSpace()
 
@@ -467,6 +633,38 @@ func (pdp *pathDescriptionParser) parseVLineToRel() error {
 
 	return nil
 
+}
+
+func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
+	var tuples []Tuple
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing CurveToRel\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+	x, y := pdp.transform.Apply(pdp.x, pdp.y)
+
+	for j := 0; j < len(tuples)/3; j++ {
+		pdp.x += tuples[j*3+2][0]
+		pdp.y += tuples[j*3+2][1]
+
+		c1x, c1y := pdp.transform.Apply(x+tuples[j*3][0], y+tuples[j*3][1])
+		c2x, c2y := pdp.transform.Apply(x+tuples[j*3+1][0], y+tuples[j*3+1][1])
+		tx, ty := pdp.transform.Apply(x+tuples[j*3+2][0], y+tuples[j*3+2][1])
+
+		pdp.p.instructions <- &DrawingInstruction{
+			Kind: CurveInstruction,
+			C1:   &Tuple{c1x, c1y},
+			C2:   &Tuple{c2x, c2y},
+			T:    &Tuple{tx, ty},
+		}
+	}
+
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseCurveToRel() error {
@@ -515,6 +713,43 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 		for _, v := range vertices {
 			x, y = pdp.transform.Apply(v[0], v[1])
 			pdp.currentsegment.addPoint([2]float64{x, y})
+		}
+	}
+
+	return nil
+}
+
+func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
+	var (
+		tuples      []Tuple
+		instrTuples []Tuple
+	)
+
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error parsing CurveToRel\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+		pdp.lex.ConsumeComma()
+	}
+
+	for j := 0; j < len(tuples)/3; j++ {
+		for _, nt := range tuples[j*3 : (j+1)*3] {
+			pdp.x = nt[0]
+			pdp.y = nt[1]
+
+			tx, ty := pdp.transform.Apply(pdp.x, pdp.y)
+			instrTuples = append(instrTuples, Tuple{tx, ty})
+		}
+
+		pdp.p.instructions <- &DrawingInstruction{
+			Kind: CurveInstruction,
+			C1:   &instrTuples[0],
+			C2:   &instrTuples[1],
+			T:    &instrTuples[2],
 		}
 	}
 
