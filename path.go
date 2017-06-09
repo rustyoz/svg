@@ -213,6 +213,8 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 		err = pdp.parseCurveToAbsDI()
 	case "l":
 		err = pdp.parseLineToRelDI()
+	case "L":
+		err = pdp.parseLineToAbsDI()
 	case "z", "Z":
 		err = pdp.parseCloseDI()
 	default:
@@ -319,8 +321,33 @@ func (pdp *pathDescriptionParser) parseMoveToAbs() error {
 		}
 		pdp.currentsegment = s
 	}
-	return nil
 
+	return nil
+}
+
+func (pdp *pathDescriptionParser) parseLineToAbsDI() error {
+	var tuples []Tuple
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		t, err := parseTuple(&pdp.lex)
+		if err != nil {
+			return fmt.Errorf("Error Passing LineToAbs\n%s", err)
+		}
+		tuples = append(tuples, t)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+	if len(tuples) > 0 {
+		x, y := pdp.transform.Apply(pdp.x, pdp.y)
+
+		for _, nt := range tuples {
+			pdp.x = nt[0]
+			pdp.y = nt[1]
+			x, y = pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		}
+	}
+
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseLineToAbs() error {
@@ -348,7 +375,6 @@ func (pdp *pathDescriptionParser) parseLineToAbs() error {
 	}
 
 	return nil
-
 }
 
 func (pdp *pathDescriptionParser) parseMoveToRelDI() error {
