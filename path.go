@@ -173,55 +173,51 @@ func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
 }
 
 func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
-	var err error
 
 	switch i.Value {
 	case "M":
-		err = pdp.parseMoveToAbs()
+		return pdp.parseMoveToAbs()
 	case "m":
-		err = pdp.parseMoveToRel()
+		return pdp.parseMoveToRel()
 	case "c":
-		err = pdp.parseCurveToRel()
+		return pdp.parseCurveToRel()
 	case "C":
-		err = pdp.parseCurveToAbs()
+		return pdp.parseCurveToAbs()
 	case "L":
-		err = pdp.parseLineToAbs()
+		return pdp.parseLineToAbs()
 	case "l":
-		err = pdp.parseLineToRel()
+		return pdp.parseLineToRel()
 	case "H":
-		err = pdp.parseHLineToAbs()
+		return pdp.parseHLineToAbs()
 	case "h":
-		err = pdp.parseHLineToRel()
+		return pdp.parseHLineToRel()
 	case "z", "Z":
-		err = pdp.parseClose()
+		return pdp.parseClose()
 	}
 
-	return err
+	return fmt.Errorf("unknown command found in SVG: %s", i.Value)
 }
 
 func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i gl.Item) error {
-	var err error
 
 	switch i.Value {
 	case "M":
-		err = pdp.parseMoveToAbsDI()
+		return pdp.parseMoveToAbsDI()
 	case "m":
-		err = pdp.parseMoveToRelDI()
+		return pdp.parseMoveToRelDI()
 	case "c":
-		err = pdp.parseCurveToRelDI()
+		return pdp.parseCurveToRelDI()
 	case "C":
-		err = pdp.parseCurveToAbsDI()
+		return pdp.parseCurveToAbsDI()
 	case "l":
-		err = pdp.parseLineToRelDI()
+		return pdp.parseLineToRelDI()
 	case "L":
-		err = pdp.parseLineToAbsDI()
+		return pdp.parseLineToAbsDI()
 	case "z", "Z":
-		err = pdp.parseCloseDI()
-	default:
-		return fmt.Errorf("unknown command found in SVG: %s", i.Value)
+		return pdp.parseCloseDI()
 	}
 
-	return err
+	return fmt.Errorf("unknown command found in SVG: %s", i.Value)
 }
 
 func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
