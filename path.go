@@ -218,7 +218,7 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 	case "z", "Z":
 		err = pdp.parseCloseDI()
 	default:
-		return fmt.Errorf("unknown command found in SVG: %s", err)
+		return fmt.Errorf("unknown command found in SVG: %s", i.Value)
 	}
 
 	return err
