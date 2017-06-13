@@ -20,6 +20,7 @@ type Path struct {
 	Stroke          string  `xml:"stroke,attr"`
 	Segments        chan Segment
 	instructions    chan *DrawingInstruction
+	errors          chan error
 	group           *Group
 }
 
@@ -111,10 +112,7 @@ func (p *Path) Parse() chan Segment {
 // Segments identical to the one returned by Parse() and the other one
 // is a channel of DrawingInstruction. The latter should be used to pass
 // to a path drawing library (like Cairo or something comparable)
-//
-// Note that you have to drain both channels even if you don't need the
-// results for one. Otherwise we will get a deadlock.
-func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
+func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) {
 	p.parseStyle()
 	pdp := newPathDParse()
 	pdp.p = p
@@ -135,11 +133,13 @@ func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 
 	p.instructions = make(chan *DrawingInstruction, 100)
+	p.errors = make(chan error, 100)
 	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
 
 	pdp.lex = *l
 	go func() {
 		defer close(p.instructions)
+		defer close(p.errors)
 		var count int
 		for {
 			i := pdp.lex.NextItem()
@@ -160,7 +160,8 @@ func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
 			case i.Type == gl.ItemLetter:
 				err := pdp.parseCommandDrawingInstructions(l, i)
 				if err != nil {
-					fmt.Printf("ParseCommand error: %s\n", err)
+					p.errors <- fmt.Errorf("error when parsing instruction number %d: %s", count, err)
+					return
 				}
 
 			default:
@@ -169,7 +170,7 @@ func (p *Path) ParseDrawingInstructions() chan *DrawingInstruction {
 		}
 	}()
 
-	return p.instructions
+	return p.instructions, p.errors
 }
 
 func (pdp *pathDescriptionParser) parseCommand(l *gl.Lexer, i gl.Item) error {
@@ -225,7 +226,7 @@ func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
 
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
-		return fmt.Errorf("Error Passing MoveToAbs Expected Tuple\n%s", err)
+		return fmt.Errorf("error parsing MoveToAbs. Expected tuple: %s", err)
 	}
 
 	pdp.x = t[0]

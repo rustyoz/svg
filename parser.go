@@ -29,11 +29,11 @@ func parseTuple(l *gl.Lexer) (Tuple, error) {
 	if ni.Type == gl.ItemNumber {
 		n, ok := strconv.ParseFloat(ni.Value, 64)
 		if ok != nil {
-			return t, fmt.Errorf("Error passing number %s", ok)
+			return t, fmt.Errorf("Error parsing number %s", ok)
 		}
 		t[0] = n
 	} else {
-		return t, fmt.Errorf("Error passing Tuple expected Number got %v", ni)
+		return t, fmt.Errorf("Error parsing Tuple expected Number got: %s", ni.Value)
 	}
 
 	if l.PeekItem().Type == gl.ItemWSP || l.PeekItem().Type == gl.ItemComma {

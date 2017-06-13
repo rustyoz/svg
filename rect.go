@@ -18,10 +18,12 @@ type Rect struct {
 
 // ParseDrawingInstructions implements the DrawingInstructionParser
 // interface
-func (r *Rect) ParseDrawingInstructions() chan *DrawingInstruction {
+func (r *Rect) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) {
 	draw := make(chan *DrawingInstruction)
+	errs := make(chan error)
 
 	defer close(draw)
+	defer close(errs)
 
-	return draw
+	return draw, errs
 }
