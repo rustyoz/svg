@@ -13,7 +13,7 @@ import (
 // instructions from them. All SVG elements should implement this
 // interface.
 type DrawingInstructionParser interface {
-	ParseDrawingInstructions() chan *DrawingInstruction
+	ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 }
 
 // Tuple is an X,Y coordinate
@@ -29,6 +29,7 @@ type Svg struct {
 	Transform    *mt.Transform
 	scale        float64
 	instructions chan *DrawingInstruction
+	errors       chan error
 	segments     chan Segment
 }
 
@@ -45,26 +46,34 @@ type Group struct {
 	Parent          *Group
 	Owner           *Svg
 	instructions    chan *DrawingInstruction
+	errors          chan error
 	segments        chan Segment
 }
 
 // ParseDrawingInstructions implements the DrawingInstructionParser interface
 //
 // This method makes it easier to get all the drawing instructions.
-func (g *Group) ParseDrawingInstructions() chan *DrawingInstruction {
-	g.instructions = make(chan *DrawingInstruction)
+func (g *Group) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) {
+	g.instructions = make(chan *DrawingInstruction, 100)
+	g.errors = make(chan error, 100)
 
 	go func() {
 		defer close(g.instructions)
+		defer close(g.errors)
 		for _, e := range g.Elements {
-			instrs := e.ParseDrawingInstructions()
+			instrs, errs := e.ParseDrawingInstructions()
+			go func() {
+				for er := range errs {
+					g.errors <- er
+				}
+			}()
 			for is := range instrs {
 				g.instructions <- is
 			}
 		}
 	}()
 
-	return g.instructions
+	return g.instructions, g.errors
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
@@ -131,27 +140,42 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 // ParseDrawingInstructions implements the DrawingInstructionParser interface
 //
 // This method makes it easier to get all the drawing instructions.
-func (s *Svg) ParseDrawingInstructions() chan *DrawingInstruction {
+func (s *Svg) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) {
 	s.instructions = make(chan *DrawingInstruction, 100)
+	s.errors = make(chan error, 100)
 
 	go func() {
+		var elecount int
 		defer close(s.instructions)
+		defer close(s.errors)
 		for _, e := range s.Elements {
-			instrs := e.ParseDrawingInstructions()
+			elecount++
+			instrs, errs := e.ParseDrawingInstructions()
+			go func(count int) {
+				for er := range errs {
+					s.errors <- fmt.Errorf("error when parsing element nr. %d: %s", count, er)
+				}
+			}(elecount)
+
 			for is := range instrs {
 				s.instructions <- is
 			}
 		}
 
 		for _, g := range s.Groups {
-			instrs := g.ParseDrawingInstructions()
+			instrs, errs := g.ParseDrawingInstructions()
+			go func() {
+				for er := range errs {
+					g.errors <- er
+				}
+			}()
 			for is := range instrs {
 				s.instructions <- is
 			}
 		}
 	}()
 
-	return s.instructions
+	return s.instructions, s.errors
 }
 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
