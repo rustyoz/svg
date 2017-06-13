@@ -226,7 +226,7 @@ func (pdp *pathDescriptionParser) parseMoveToAbsDI() error {
 
 	t, err := parseTuple(&pdp.lex)
 	if err != nil {
-		return fmt.Errorf("Error Passing MoveToAbs Expected Tuple\n%s", err)
+		return fmt.Errorf("error parsing MoveToAbs. Expected tuple: %s", err)
 	}
 
 	pdp.x = t[0]
