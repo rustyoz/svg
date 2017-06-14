@@ -122,7 +122,7 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 			case "circle":
 				elementStruct = &Circle{group: g}
 			case "path":
-				elementStruct = &Path{group: g, StrokeWidth: float64(g.StrokeWidth), Stroke: g.Stroke, Fill: &g.Fill}
+				elementStruct = &Path{group: g, StrokeWidth: float64(g.StrokeWidth), Stroke: &g.Stroke, Fill: &g.Fill}
 
 			}
 

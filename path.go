@@ -17,7 +17,7 @@ type Path struct {
 	properties      map[string]string
 	StrokeWidth     float64 `xml:"stroke-width,attr"`
 	Fill            *string `xml:"fill,attr"`
-	Stroke          string  `xml:"stroke,attr"`
+	Stroke          *string `xml:"stroke,attr"`
 	StrokeLineCap   *string `xml:"stroke-linecap,attr"`
 	StrokeLineJoin  *string `xml:"stroke-linejoin,attr"`
 	Segments        chan Segment
@@ -154,8 +154,8 @@ func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 
 				pdp.p.instructions <- &DrawingInstruction{
 					Kind:           PaintInstruction,
-					Stroke:         &p.Stroke,
 					StrokeWidth:    &scaledStrokeWidth,
+					Stroke:         p.Stroke,
 					StrokeLineCap:  p.StrokeLineCap,
 					StrokeLineJoin: p.StrokeLineJoin,
 					Fill:           p.Fill,
