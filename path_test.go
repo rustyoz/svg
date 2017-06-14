@@ -13,7 +13,7 @@ func TestParsePath(t *testing.T) {
 	svg, err := ParseSvg(svgAbsoluteLine, "test", 0)
 	require.NoError(t, err)
 
-	dis := svg.ParseDrawingInstructions()
+	dis, _ := svg.ParseDrawingInstructions()
 	for di := range dis {
 		log.Printf("di: %+v, di.M: %+v", di, di.M)
 	}
