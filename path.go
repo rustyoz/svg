@@ -642,9 +642,10 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &Tuple{c1x, c1y},
-			C2:   &Tuple{c2x, c2y},
-			T:    &Tuple{tx, ty},
+			CurvePoints: &CurvePoints{C1: &Tuple{c1x, c1y},
+				C2: &Tuple{c2x, c2y},
+				T:  &Tuple{tx, ty},
+			},
 		}
 
 		pdp.x += tuples[j*3+2][0]
@@ -692,9 +693,11 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &Tuple{c1x, c1y},
-			C2:   &Tuple{c2x, c2y},
-			T:    &Tuple{tx, ty},
+			CurvePoints: &CurvePoints{
+				C1: &Tuple{c1x, c1y},
+				C2: &Tuple{c2x, c2y},
+				T:  &Tuple{tx, ty},
+			},
 		}
 
 		vertices := cb.recursiveInterpolate(10, 0)
@@ -735,9 +738,11 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &instrTuples[0],
-			C2:   &instrTuples[1],
-			T:    &instrTuples[2],
+			CurvePoints: &CurvePoints{
+				C1: &instrTuples[0],
+				C2: &instrTuples[1],
+				T:  &instrTuples[2],
+			},
 		}
 	}
 
@@ -781,9 +786,11 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &instrTuples[0],
-			C2:   &instrTuples[1],
-			T:    &instrTuples[2],
+			CurvePoints: &CurvePoints{
+				C1: &instrTuples[0],
+				C2: &instrTuples[1],
+				T:  &instrTuples[2],
+			},
 		}
 
 		vertices := cb.recursiveInterpolate(10, 0)

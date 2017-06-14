@@ -15,6 +15,13 @@ const (
 	PaintInstruction
 )
 
+// CurvePoints are the points needed by a bezier curve.
+type CurvePoints struct {
+	C1 *Tuple
+	C2 *Tuple
+	T  *Tuple
+}
+
 // DrawingInstruction contains enough information that a simple drawing
 // library can draw the shapes contained in an SVG file.
 //
@@ -23,9 +30,7 @@ const (
 type DrawingInstruction struct {
 	Kind           InstructionType
 	M              *Tuple
-	C1             *Tuple
-	C2             *Tuple
-	T              *Tuple
+	CurvePoints    *CurvePoints
 	Radius         *float64
 	StrokeWidth    *float64
 	Fill           *string
