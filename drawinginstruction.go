@@ -21,13 +21,15 @@ const (
 // The struct contains all necessary fields but only the ones needed (as
 // indicated byt the InstructionType) will be non-nil.
 type DrawingInstruction struct {
-	Kind        InstructionType
-	M           *Tuple
-	C1          *Tuple
-	C2          *Tuple
-	T           *Tuple
-	Radius      *float64
-	StrokeWidth *float64
-	Fill        *string
-	Stroke      *string
+	Kind           InstructionType
+	M              *Tuple
+	C1             *Tuple
+	C2             *Tuple
+	T              *Tuple
+	Radius         *float64
+	StrokeWidth    *float64
+	Fill           *string
+	Stroke         *string
+	StrokeLineCap  *string
+	StrokeLineJoin *string
 }

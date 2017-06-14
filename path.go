@@ -18,6 +18,8 @@ type Path struct {
 	StrokeWidth     float64 `xml:"stroke-width,attr"`
 	Fill            *string `xml:"fill,attr"`
 	Stroke          string  `xml:"stroke,attr"`
+	StrokeLineCap   *string `xml:"stroke-linecap,attr"`
+	StrokeLineJoin  *string `xml:"stroke-linejoin,attr"`
 	Segments        chan Segment
 	instructions    chan *DrawingInstruction
 	errors          chan error
@@ -151,10 +153,12 @@ func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 				scaledStrokeWidth := p.StrokeWidth * pdp.p.group.Owner.scale
 
 				pdp.p.instructions <- &DrawingInstruction{
-					Kind:        PaintInstruction,
-					StrokeWidth: &scaledStrokeWidth,
-					Stroke:      &p.Stroke,
-					Fill:        p.Fill,
+					Kind:           PaintInstruction,
+					Stroke:         &p.Stroke,
+					StrokeWidth:    &scaledStrokeWidth,
+					StrokeLineCap:  p.StrokeLineCap,
+					StrokeLineJoin: p.StrokeLineJoin,
+					Fill:           p.Fill,
 				}
 				return
 			case i.Type == gl.ItemLetter:
