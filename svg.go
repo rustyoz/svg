@@ -2,9 +2,11 @@ package svg
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	mt "github.com/smallpdf/Mtransform"
 )
@@ -24,6 +26,7 @@ type Tuple [2]float64
 type Svg struct {
 	Title        string  `xml:"title"`
 	Groups       []Group `xml:"g"`
+	ViewBox      string  `xml:"viewBox,attr"`
 	Elements     []DrawingInstructionParser
 	Name         string
 	Transform    *mt.Transform
@@ -181,6 +184,13 @@ func (s *Svg) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) 
 // UnmarshalXML implements the encoding.xml.Unmarshaler interface
 func (s *Svg) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 	for {
+		for _, attr := range start.Attr {
+			if attr.Name.Local == "viewBox" {
+				s.ViewBox = attr.Value
+				break
+			}
+		}
+
 		token, err := decoder.Token()
 		if err != nil {
 			return err
@@ -278,6 +288,28 @@ func ParseSvgFromReader(r io.Reader, name string, scale float64) (*Svg, error) {
 		}
 	}
 	return &svg, nil
+}
+
+// ViewBoxValues returns all the numerical values in the viewBox
+// attribute.
+func (s *Svg) ViewBoxValues() ([]float64, error) {
+	var vals []float64
+
+	if s.ViewBox == "" {
+		return vals, errors.New("viewBox attribute is empty")
+	}
+
+	split := strings.Split(s.ViewBox, " ")
+
+	for _, val := range split {
+		ival, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return vals, err
+		}
+		vals = append(vals, ival)
+	}
+
+	return vals, nil
 }
 
 // SetOwner sets the owner of a SVG Group
