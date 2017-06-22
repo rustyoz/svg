@@ -17,7 +17,9 @@ type Path struct {
 	properties      map[string]string
 	StrokeWidth     float64 `xml:"stroke-width,attr"`
 	Fill            *string `xml:"fill,attr"`
-	Stroke          string  `xml:"stroke,attr"`
+	Stroke          *string `xml:"stroke,attr"`
+	StrokeLineCap   *string `xml:"stroke-linecap,attr"`
+	StrokeLineJoin  *string `xml:"stroke-linejoin,attr"`
 	Segments        chan Segment
 	instructions    chan *DrawingInstruction
 	errors          chan error
@@ -151,10 +153,12 @@ func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 				scaledStrokeWidth := p.StrokeWidth * pdp.p.group.Owner.scale
 
 				pdp.p.instructions <- &DrawingInstruction{
-					Kind:        PaintInstruction,
-					StrokeWidth: &scaledStrokeWidth,
-					Stroke:      &p.Stroke,
-					Fill:        p.Fill,
+					Kind:           PaintInstruction,
+					StrokeWidth:    &scaledStrokeWidth,
+					Stroke:         p.Stroke,
+					StrokeLineCap:  p.StrokeLineCap,
+					StrokeLineJoin: p.StrokeLineJoin,
+					Fill:           p.Fill,
 				}
 				return
 			case i.Type == gl.ItemLetter:
@@ -638,9 +642,10 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &Tuple{c1x, c1y},
-			C2:   &Tuple{c2x, c2y},
-			T:    &Tuple{tx, ty},
+			CurvePoints: &CurvePoints{C1: &Tuple{c1x, c1y},
+				C2: &Tuple{c2x, c2y},
+				T:  &Tuple{tx, ty},
+			},
 		}
 
 		pdp.x += tuples[j*3+2][0]
@@ -688,9 +693,11 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &Tuple{c1x, c1y},
-			C2:   &Tuple{c2x, c2y},
-			T:    &Tuple{tx, ty},
+			CurvePoints: &CurvePoints{
+				C1: &Tuple{c1x, c1y},
+				C2: &Tuple{c2x, c2y},
+				T:  &Tuple{tx, ty},
+			},
 		}
 
 		vertices := cb.recursiveInterpolate(10, 0)
@@ -731,9 +738,11 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &instrTuples[0],
-			C2:   &instrTuples[1],
-			T:    &instrTuples[2],
+			CurvePoints: &CurvePoints{
+				C1: &instrTuples[0],
+				C2: &instrTuples[1],
+				T:  &instrTuples[2],
+			},
 		}
 	}
 
@@ -777,9 +786,11 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
-			C1:   &instrTuples[0],
-			C2:   &instrTuples[1],
-			T:    &instrTuples[2],
+			CurvePoints: &CurvePoints{
+				C1: &instrTuples[0],
+				C2: &instrTuples[1],
+				T:  &instrTuples[2],
+			},
 		}
 
 		vertices := cb.recursiveInterpolate(10, 0)
