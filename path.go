@@ -218,6 +218,10 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 		return pdp.parseLineToRelDI()
 	case "L":
 		return pdp.parseLineToAbsDI()
+	case "H":
+		return pdp.parseHLineToAbsDI()
+	case "h":
+		return pdp.parseHLineToRelDI()
 	case "z", "Z":
 		return pdp.parseCloseDI()
 	}
@@ -456,6 +460,46 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 			pdp.p.instructions <- &DrawingInstruction{Kind: MoveInstruction, M: &Tuple{x, y}}
 		}
 	}
+
+	return nil
+}
+
+func (pdp *pathDescriptionParser) parseHLineToRelDI() error {
+	coords := []float64{}
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		item := pdp.lex.NextItem()
+		c, err := strconv.ParseFloat(item.Value, 64)
+		if err != nil {
+			return fmt.Errorf("parsing %q: %s", item.Value, err)
+		}
+		coords = append(coords, c)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+	if len(coords) > 0 {
+		for _, c := range coords {
+			pdp.x += c
+			x, y := pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		}
+	}
+	return nil
+}
+
+func (pdp *pathDescriptionParser) parseHLineToAbsDI() error {
+	pdp.lex.ConsumeWhiteSpace()
+	var n float64
+	var err error
+	if pdp.lex.PeekItem().Type == gl.ItemNumber {
+		n, err = parseNumber(pdp.lex.NextItem())
+		if err != nil {
+			return fmt.Errorf("Error Passing HLineToAbs\n%s", err)
+		}
+	}
+
+	pdp.x = n
+	x, y := pdp.transform.Apply(pdp.x, pdp.y)
+	pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
 
 	return nil
 }
