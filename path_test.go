@@ -7,18 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParsePath(t *testing.T) {
-	const svgAbsoluteLine = `<svg viewBox="0 0 100 100"><path d="M0.000 0.000 L100.000 0.000 L100.000 100.000 L0.000 100.000 Z" fill="#000000" stroke="#000000" stroke-width="2"/></svg>`
-
-	svg, err := ParseSvg(svgAbsoluteLine, "test", 0)
-	require.NoError(t, err)
-
-	dis, _ := svg.ParseDrawingInstructions()
-	for di := range dis {
-		log.Printf("di: %+v, di.M: %+v", di, di.M)
-	}
-}
-
 type PathTest struct {
 	Description string
 	Svg     string
@@ -28,6 +16,20 @@ type PathTest struct {
 }
 
 var tests = []PathTest{
+	{
+		"absolute lines",
+		`<svg viewBox="0 0 100 100"><path d="M0.000 0.000 L100.000 0.000 100.000 100.000 L0.000 100.000 Z" fill="#000000" stroke="#000000" stroke-width="2"/></svg>`,
+		[]InstructionType{MoveInstruction, LineInstruction, LineInstruction, LineInstruction, CloseInstruction, PaintInstruction},
+		[]float64{0, 100, 100, 0,   0},
+		[]float64{0, 0,   100, 100, 0},
+	},
+	{
+		"relative lines",
+		`<svg viewBox="0 0 100 100"><path d="M0.000 0.000 l100.000 0.000 100.000 100.000 l0.000 100.000 Z" fill="#000000" stroke="#000000" stroke-width="2"/></svg>`,
+		[]InstructionType{MoveInstruction, LineInstruction, LineInstruction, LineInstruction, CloseInstruction, PaintInstruction},
+		[]float64{0, 100, 200, 200, 0},
+		[]float64{0, 0,   100, 200, 0},
+	},
 	{
 		"relative h-line test",
 		`<svg viewBox="0 0 100 100"><path d="M0.000 0.000 h100.000 50.000" fill="#000000" stroke="#000000" stroke-width="2"/></svg>`,
