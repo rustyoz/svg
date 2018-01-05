@@ -79,29 +79,25 @@ func TestParsePathList(t *testing.T) {
 			t.Fatalf("expected %d instructions for test %s, but received %d", len(test.Kinds), test.Description, len(strux))
 		}
 
-		for i, kind := range test.Kinds {
-			if strux[i].Kind != kind {
-				t.Fatalf("expected instruction %d for test %s to be %d, but was %d", i, test.Description, kind, strux[i].Kind)
+		for i, stru := range strux {
+			if stru.Kind != test.Kinds[i] {
+				t.Fatalf("expected instruction %d for test %s to be %d, but was %d", i, test.Description, test.Kinds[i], stru.Kind)
 			}
-		}
 
-		for i, x := range test.XCoords {
-			if strux[i].M == nil {
+			if stru.M == nil {
 				continue
 			}
 
-			if strux[i].M[0] != x {
-				t.Fatalf("expected X coordinate %d for test %s to be %f, but was %f", i, test.Description, x, strux[i].M[0])
+			if stru.M[0] != test.XCoords[i] {
+				t.Fatalf("expected X coordinate %d for test %s to be %f, but was %f", i, test.Description, test.XCoords[i], stru.M[0])
 			}
-		}
 
-		for i, y := range test.YCoords {
-			if strux[i].M == nil {
+			if stru.M == nil {
 				continue
 			}
 
-			if strux[i].M[1] != y {
-				t.Fatalf("expected Y coordinate %d for test %s to be %f, but was %f", i, test.Description, y, strux[i].M[1])
+			if stru.M[1] != test.YCoords[i] {
+				t.Fatalf("expected Y coordinate %d for test %s to be %f, but was %f", i, test.Description, test.YCoords[i], stru.M[1])
 			}
 		}
 	}
