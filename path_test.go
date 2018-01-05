@@ -1,7 +1,6 @@
 package svg
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -73,7 +72,7 @@ func TestParsePathList(t *testing.T) {
 		strux := []*DrawingInstruction{}
 		for di := range dis {
 			strux = append(strux, di)
-			log.Printf("di: %+v, di.M: %+v", di, di.M)
+			t.Logf("di: %+v, di.M: %+v", di, di.M)
 		}
 
 		if len(strux) != len(test.Kinds) {
