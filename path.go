@@ -218,10 +218,12 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 		return pdp.parseLineToRelDI()
 	case "L":
 		return pdp.parseLineToAbsDI()
-	case "H": fallthrough
+	case "H":
+		fallthrough
 	case "h":
 		return pdp.parseHLineToDI(i.Value == "H")
-	case "V": fallthrough
+	case "V":
+		fallthrough
 	case "v":
 		return pdp.parseVLineToDI(i.Value == "V")
 	case "z", "Z":
