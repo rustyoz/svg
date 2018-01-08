@@ -251,7 +251,7 @@ func ParseSvg(str string, name string, scale float64) (*Svg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ParseSvg Error: %v", err)
 	}
-	fmt.Println(len(svg.Groups))
+
 	for i := range svg.Groups {
 		svg.Groups[i].SetOwner(&svg)
 		if svg.Groups[i].Transform == nil {
@@ -278,8 +278,6 @@ func ParseSvgFromReader(r io.Reader, name string, scale float64) (*Svg, error) {
 	if err := xml.NewDecoder(r).Decode(&svg); err != nil {
 		return nil, fmt.Errorf("ParseSvg Error: %v", err)
 	}
-
-	fmt.Println(len(svg.Groups))
 
 	for i := range svg.Groups {
 		svg.Groups[i].SetOwner(&svg)
