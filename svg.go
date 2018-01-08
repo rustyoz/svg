@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 
 	mt "github.com/smallpdf/Mtransform"
 )
@@ -60,15 +61,19 @@ func (g *Group) ParseDrawingInstructions() (chan *DrawingInstruction, chan error
 	g.instructions = make(chan *DrawingInstruction, 100)
 	g.errors = make(chan error, 100)
 
+	errWg := &sync.WaitGroup{}
+
 	go func() {
 		defer close(g.instructions)
-		defer close(g.errors)
+		defer func() { errWg.Wait(); close(g.errors) }()
 		for _, e := range g.Elements {
 			instrs, errs := e.ParseDrawingInstructions()
+			errWg.Add(1)
 			go func() {
 				for er := range errs {
 					g.errors <- er
 				}
+				errWg.Done()
 			}()
 			for is := range instrs {
 				g.instructions <- is
@@ -148,16 +153,19 @@ func (s *Svg) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) 
 	s.errors = make(chan error, 100)
 
 	go func() {
+		errWg := &sync.WaitGroup{}
 		var elecount int
 		defer close(s.instructions)
-		defer close(s.errors)
+		defer func() { errWg.Wait(); close(s.errors) }()
 		for _, e := range s.Elements {
 			elecount++
 			instrs, errs := e.ParseDrawingInstructions()
+			errWg.Add(1)
 			go func(count int) {
 				for er := range errs {
 					s.errors <- fmt.Errorf("error when parsing element nr. %d: %s", count, er)
 				}
+				errWg.Done()
 			}(elecount)
 
 			for is := range instrs {
@@ -167,10 +175,12 @@ func (s *Svg) ParseDrawingInstructions() (chan *DrawingInstruction, chan error) 
 
 		for _, g := range s.Groups {
 			instrs, errs := g.ParseDrawingInstructions()
+			errWg.Add(1)
 			go func() {
 				for er := range errs {
-					g.errors <- er
+					s.errors <- er
 				}
+				errWg.Done()
 			}()
 			for is := range instrs {
 				s.instructions <- is

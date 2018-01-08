@@ -218,6 +218,14 @@ func (pdp *pathDescriptionParser) parseCommandDrawingInstructions(l *gl.Lexer, i
 		return pdp.parseLineToRelDI()
 	case "L":
 		return pdp.parseLineToAbsDI()
+	case "H":
+		fallthrough
+	case "h":
+		return pdp.parseHLineToDI(i.Value == "H")
+	case "V":
+		fallthrough
+	case "v":
+		return pdp.parseVLineToDI(i.Value == "V")
 	case "z", "Z":
 		return pdp.parseCloseDI()
 	}
@@ -460,6 +468,32 @@ func (pdp *pathDescriptionParser) parseMoveToRel() error {
 	return nil
 }
 
+func (pdp *pathDescriptionParser) parseHLineToDI(abs bool) error {
+	coords := []float64{}
+	pdp.lex.ConsumeWhiteSpace()
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		item := pdp.lex.NextItem()
+		c, err := strconv.ParseFloat(item.Value, 64)
+		if err != nil {
+			return fmt.Errorf("parsing %q: %s", item.Value, err)
+		}
+		coords = append(coords, c)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+	if len(coords) > 0 {
+		for _, c := range coords {
+			if abs {
+				pdp.x = c
+			} else {
+				pdp.x += c
+			}
+			x, y := pdp.transform.Apply(pdp.x, pdp.y)
+			pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+		}
+	}
+	return nil
+}
+
 func (pdp *pathDescriptionParser) parseLineToRelDI() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
@@ -557,6 +591,31 @@ func (pdp *pathDescriptionParser) parseHLineToRel() error {
 
 	return nil
 
+}
+
+func (pdp *pathDescriptionParser) parseVLineToDI(abs bool) error {
+	pdp.lex.ConsumeWhiteSpace()
+	coords := []float64{}
+	for pdp.lex.PeekItem().Type == gl.ItemNumber {
+		n, err := parseNumber(pdp.lex.NextItem())
+		if err != nil {
+			return fmt.Errorf("Error Passing VLineToRel\n%s", err)
+		}
+		coords = append(coords, n)
+		pdp.lex.ConsumeWhiteSpace()
+	}
+
+	for _, n := range coords {
+		if abs {
+			pdp.y = n
+		} else {
+			pdp.y += n
+		}
+		x, y := pdp.transform.Apply(pdp.x, pdp.y)
+		pdp.p.instructions <- &DrawingInstruction{Kind: LineInstruction, M: &Tuple{x, y}}
+	}
+
+	return nil
 }
 
 func (pdp *pathDescriptionParser) parseVLineToAbs() error {
