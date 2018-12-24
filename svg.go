@@ -3,6 +3,7 @@ package svg
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"strconv"
 
 	mt "github.com/rustyoz/Mtransform"
@@ -108,7 +109,32 @@ func ParseSvg(str string, name string, scale float64) (*Svg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ParseSvg Error: %v\n", err)
 	}
-	fmt.Println(len(svg.Groups))
+	for i := range svg.Groups {
+		svg.Groups[i].SetOwner(&svg)
+		if svg.Groups[i].Transform == nil {
+			svg.Groups[i].Transform = mt.NewTransform()
+		}
+	}
+	return &svg, nil
+}
+
+func ParseReader(reader io.Reader, name string, scale float64) (*Svg, error) {
+	var svg Svg
+	svg.Name = name
+	svg.Transform = mt.NewTransform()
+	if scale > 0 {
+		svg.Transform.Scale(scale, scale)
+		svg.scale = scale
+	}
+	if scale < 0 {
+		svg.Transform.Scale(1.0/-scale, 1.0/-scale)
+		svg.scale = 1.0 / -scale
+	}
+	dec := xml.NewDecoder(reader)
+	err := dec.Decode(&svg)
+	if err != nil {
+		return nil, fmt.Errorf("failled to parse SVG: %v\n", err)
+	}
 	for i := range svg.Groups {
 		svg.Groups[i].SetOwner(&svg)
 		if svg.Groups[i].Transform == nil {
