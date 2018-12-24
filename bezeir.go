@@ -2,8 +2,6 @@ package svg
 
 import "math"
 
-// cubicBezier
-//
 type cubicBezier struct {
 	controlpoints [4][2]float64
 	vertices      [][2]float64
@@ -96,11 +94,10 @@ func (c *cubicBezier) recursiveInterpolate(limit int, level int) [][2]float64 {
 		c2.controlpoints[3] = c.controlpoints[3]
 		vertices = append(vertices, c2.recursiveInterpolate(limit-1, c.level+1)...)
 		return vertices
-	} else {
-		var vertices [][2]float64
-		vertices = append(vertices, c.controlpoints[0])
-		vertices = append(vertices, m1234)
-		vertices = append(vertices, c.controlpoints[3])
-		return vertices
 	}
+	var vertices [][2]float64
+	vertices = append(vertices, c.controlpoints[0])
+	vertices = append(vertices, m1234)
+	vertices = append(vertices, c.controlpoints[3])
+	return vertices
 }

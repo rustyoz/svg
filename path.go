@@ -8,8 +8,9 @@ import (
 	gl "github.com/rustyoz/genericlexer"
 )
 
+//Path contains the data from a path svg element
 type Path struct {
-	Id              string `xml:"id,attr"`
+	ID              string `xml:"id,attr"`
 	D               string `xml:"d,attr"`
 	Style           string `xml:"style,attr"`
 	TransformString string `xml:"transform,attr"`
@@ -19,8 +20,7 @@ type Path struct {
 	group           *Group
 }
 
-// Segment
-// A segment of a path that contains a list of connected points, its stroke Width and if the segment forms a closed loop.
+// Segment is a segment of a path that contains a list of connected points, its stroke Width and if the segment forms a closed loop.
 // Points are defined in world space after any matrix transformation is applied.
 type Segment struct {
 	Width  float64
@@ -48,7 +48,7 @@ type pathDescriptionParser struct {
 	peekcount      int
 	lasttuple      Tuple
 	transform      mt.Transform
-	svg            *Svg
+	svg            *SVG
 	currentsegment *Segment
 }
 
@@ -58,8 +58,7 @@ func newPathDParse() *pathDescriptionParser {
 	return pdp
 }
 
-// Parse()
-// interprets path description, transform and style atttributes to create a channel of segments.
+// Parse interprets path description, transform and style atttributes to create a channel of segments.
 func (p *Path) Parse() chan Segment {
 	p.parseStyle()
 	pdp := newPathDParse()
@@ -75,7 +74,7 @@ func (p *Path) Parse() chan Segment {
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, *p.group.Transform)
 	pdp.transform = mt.MultiplyTransforms(pdp.transform, pathTransform)
 	p.Segments = make(chan Segment)
-	l, _ := gl.Lex(fmt.Sprint(p.Id), p.D)
+	l, _ := gl.Lex(fmt.Sprint(p.ID), p.D)
 	pdp.lex = *l
 	go func() {
 		defer close(p.Segments)

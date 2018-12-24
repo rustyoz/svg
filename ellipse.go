@@ -2,8 +2,9 @@ package svg
 
 import mt "github.com/rustyoz/Mtransform"
 
+//Ellipse contains the data from a ellipse svg element
 type Ellipse struct {
-	Id        string `xml:"id,attr"`
+	ID        string `xml:"id,attr"`
 	Transform string `xml:"transform,attr"`
 	Style     string `xml:"style,attr"`
 	Cx        string `xml:"cx,attr"`
