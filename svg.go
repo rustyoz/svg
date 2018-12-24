@@ -131,16 +131,17 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 				elementStruct = &Circle{group: g}
 			case "path":
 				elementStruct = &Path{group: g, StrokeWidth: float64(g.StrokeWidth), Stroke: &g.Stroke, Fill: &g.Fill}
-
+			default:
+				continue
 			}
-
 			if err = decoder.DecodeElement(elementStruct, &tok); err != nil {
 				return fmt.Errorf("error decoding element of Group: %s", err)
 			}
 			g.Elements = append(g.Elements, elementStruct)
-
 		case xml.EndElement:
-			return nil
+			if tok.Name.Local == "g" {
+				return nil
+			}
 		}
 	}
 }
