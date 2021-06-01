@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	mt "github.com/rustyoz/Mtransform"
-	gl "github.com/rustyoz/genericlexer"
+	gl "github.com/Handzo/genericlexer"
 )
 
 func parseNumber(i gl.Item) (float64, error) {

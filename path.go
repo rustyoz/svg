@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	mt "github.com/rustyoz/Mtransform"
-	gl "github.com/rustyoz/genericlexer"
+	gl "github.com/Handzo/genericlexer"
 )
 
 // Path is an SVG XML path element
@@ -687,6 +687,8 @@ func (pdp *pathDescriptionParser) parseVLineToRel() error {
 func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
+	pdp.lex.ConsumeComma()
+
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
 		t, err := parseTuple(pdp.lex)
 		if err != nil {
@@ -694,6 +696,7 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		}
 		tuples = append(tuples, t)
 		pdp.lex.ConsumeWhiteSpace()
+		pdp.lex.ConsumeComma()
 	}
 	x, y := pdp.transform.Apply(pdp.x, pdp.y)
 
