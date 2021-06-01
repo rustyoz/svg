@@ -687,6 +687,8 @@ func (pdp *pathDescriptionParser) parseVLineToRel() error {
 func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 	var tuples []Tuple
 	pdp.lex.ConsumeWhiteSpace()
+	pdp.lex.ConsumeComma()
+
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
 		t, err := parseTuple(pdp.lex)
 		if err != nil {
@@ -694,6 +696,7 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		}
 		tuples = append(tuples, t)
 		pdp.lex.ConsumeWhiteSpace()
+		pdp.lex.ConsumeComma()
 	}
 	for j := 0; j < len(tuples)/3; j++ { // convert to absolute
 		j3 := j * 3
