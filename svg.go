@@ -45,6 +45,7 @@ type Group struct {
 	Stroke          string
 	StrokeWidth     float64
 	Fill            string
+	Opacity			float64
 	FillRule        string
 	Elements        []DrawingInstructionParser
 	TransformString string
@@ -102,6 +103,12 @@ func (g *Group) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 			g.StrokeWidth = floatValue
 		case "fill":
 			g.Fill = attr.Value
+		case "opacity":
+			floatValue, err := strconv.ParseFloat(attr.Value, 64)
+			if err != nil {
+				return err
+			}
+			g.Opacity = floatValue
 		case "fill-rule":
 			g.FillRule = attr.Value
 		case "transform":

@@ -17,6 +17,7 @@ type Path struct {
 	properties      map[string]string
 	StrokeWidth     float64 `xml:"stroke-width,attr"`
 	Fill            *string `xml:"fill,attr"`
+	Opacity			*float64 `xml:"opacity,attr"`
 	Stroke          *string `xml:"stroke,attr"`
 	StrokeLineCap   *string `xml:"stroke-linecap,attr"`
 	StrokeLineJoin  *string `xml:"stroke-linejoin,attr"`
@@ -151,6 +152,7 @@ func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 				return
 			case i.Type == gl.ItemEOS:
 				scaledStrokeWidth := p.StrokeWidth * pdp.p.group.Owner.scale
+				opacity := p.Opacity
 
 				pdp.p.instructions <- &DrawingInstruction{
 					Kind:           PaintInstruction,
@@ -159,6 +161,7 @@ func (p *Path) ParseDrawingInstructions() (chan *DrawingInstruction, chan error)
 					StrokeLineCap:  p.StrokeLineCap,
 					StrokeLineJoin: p.StrokeLineJoin,
 					Fill:           p.Fill,
+					Opacity:		opacity,
 				}
 				return
 			case i.Type == gl.ItemLetter:
@@ -692,6 +695,7 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
 		t, err := parseTuple(pdp.lex)
 		if err != nil {
+			panic(err)
 			return fmt.Errorf("Error Passing CurveToRel\n%s", err)
 		}
 		tuples = append(tuples, t)
@@ -876,7 +880,11 @@ func (p *Path) parseStyle() {
 			if ok == nil {
 				p.StrokeWidth = sw
 			}
-
+		case "opacity":
+			o, ok := strconv.ParseFloat(val, 64)
+			if ok == nil {
+				p.Opacity = &o
+			}
 		}
 	}
 }
