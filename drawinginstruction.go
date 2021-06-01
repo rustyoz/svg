@@ -32,6 +32,7 @@ type DrawingInstruction struct {
 	CurvePoints    *CurvePoints
 	Radius         *float64
 	StrokeWidth    *float64
+	Opacity		   *float64
 	Fill           *string
 	Stroke         *string
 	StrokeLineCap  *string
