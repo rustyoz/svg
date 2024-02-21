@@ -54,24 +54,39 @@ func parseTuple(l *gl.Lexer) (Tuple, error) {
 }
 
 func parseTransform(tstring string) (mt.Transform, error) {
+	var x *mt.Transform
 	lexer, _ := gl.Lex("tlexer", tstring)
 	for {
 		i := lexer.NextItem()
+		var t mt.Transform
+		var err error
 		switch i.Type {
 		case gl.ItemEOS:
-			return mt.Identity(),
-				fmt.Errorf("transform parse failed")
+			if x == nil {
+				return mt.Identity(),
+					fmt.Errorf("transform parse failed")
+			}
+			return *x, nil
 		case gl.ItemWord:
 			switch i.Value {
 			case "matrix":
-				return parseMatrix(lexer)
+				t, err = parseMatrix(lexer)
 			case "translate":
-				return parseTranslate(lexer)
+				t, err = parseTranslate(lexer)
 			case "rotate":
-				return parseRotate(lexer)
+				t, err = parseRotate(lexer)
 			case "scale":
-				return parseScale(lexer)
+				t, err = parseScale(lexer)
 			}
+		case gl.ItemWSP:
+			continue
+		}
+		if err != nil {
+			return t, err
+		} else if x == nil {
+			x = &t
+		} else {
+			x.MultiplyWith(t) // see https://www.w3.org/TR/SVGTiny12
 		}
 	}
 }
