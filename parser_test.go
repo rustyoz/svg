@@ -29,3 +29,40 @@ func TestParse(t *testing.T) {
 	is.NoErr(err)
 	is.NotNil(svg)
 }
+
+func TestTransform(t *testing.T) {
+	content := `<?xml version="1.0" standalone="no"?>
+	<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+	 "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+	<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+	 width="684.000000pt" height="630.000000pt" viewBox="0 0 684.000000 630.000000"
+	 preserveAspectRatio="xMidYMid meet">
+	<g transform="translate(0.000000,630.000000) scale(0.100000,-0.100000)"
+	fill="#ff0000" stroke="none">
+	<path d="M1705 6274 c-758 -115 -1377 -637 -1614 -1360 -74 -227 -86 -311 -86
+	-624 0 -248 2 -286 23 -389 64 -315 210 -626 414 -880 34 -42 715 -731 1515
+	-1531 l1453 -1455 1444 1445 c794 795 1473 1481 1510 1524 98 117 189 259 261
+	409 233 479 267 1011 99 1516 -240 718 -861 1235 -1615 1345 -138 21 -430 21
+	-564 1 -213 -32 -397 -87 -580 -174 -188 -90 -319 -177 -478 -316 l-77 -66
+	-77 66 c-309 270 -657 431 -1054 489 -132 20 -447 20 -574 0z"/>
+	</g>
+	</svg>
+	`
+	s, err := ParseSvg(content, "transformed heart", 0)
+	if err != nil {
+		t.Fatalf("cannot parse svg %v", content)
+	}
+	if len(s.Groups) < 1 {
+		t.Fatal("group not found")
+	}
+	g := s.Groups[0]
+	t.Logf("original: transform=\"%v\"", g.TransformString)
+	m := *g.Transform
+	a, c, e := m[0][0], m[0][1], m[0][2]
+	b, d, f := m[1][0], m[1][1], m[1][2]
+	// see https://www.w3.org/TR/SVGTiny12 for [a b c d e f] vector notation
+	t.Logf("accumulated: transform=\"matrix(%v %v %v %v %v %v)\"", a, b, c, d, e, f)
+	if !(a == 0.1 && d == -0.1 && f == 630) {
+		t.Error("mismatch expected transform matrix(0.1 0 0 -0.1 0 630)")
+	}
+}
