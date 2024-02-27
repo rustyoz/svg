@@ -1,6 +1,7 @@
 package svg
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -94,5 +95,71 @@ func Test2Curves(t *testing.T) {
 	p := di.CurvePoints // 400 100 775 100 700 200
 	if !(p.C1[0] == 400 && p.C2[0] == 775 && p.T[0] == 700) {
 		t.Fatalf("expect [400 100] [775 100] [700 200], got %v %v %v", *p.C1, *p.C2, *p.T)
+	}
+}
+
+func TestPathRelScale(t *testing.T) {
+	content := `<?xml version="1.0" standalone="no"?>
+	<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+	 "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+	<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 -600 800 500">
+	<g transform="scale(1,-1)">
+	<path fill="none" stroke="red" stroke-width="5"
+	d="M100 200 c-75 -100 300 -100 300 0 0 -100 375 -100 300 0 l-300 350z" />
+	</g>
+	</svg>
+	`
+	s, err := ParseSvg(content, "", 1)
+	if err != nil {
+		t.Fatalf("cannot parse svg %v", content)
+	}
+	dis, _ := s.ParseDrawingInstructions()
+	strux := []*DrawingInstruction{}
+	for di := range dis {
+		strux = append(strux, di)
+	}
+	curveIdx := 1 // Move Curve*2 Line Close Paint
+	di := strux[curveIdx]
+	if di.Kind != CurveInstruction {
+		t.Fatalf("expect curve (c) instruction at %v, got %v", curveIdx, di)
+	}
+	if di.CurvePoints.T[1] != -200 { // [100+300, 200+0] scale by [1, -1]
+		t.Fatalf("expect 1st curve terminating at [400, -200], got %v",
+			*di.CurvePoints.T)
+	}
+}
+
+func TestPathRelTranslate(t *testing.T) {
+	content := `<?xml version="1.0" standalone="no"?>
+	<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+	 "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+	<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+	 viewBox="0 400 600 600">
+	<g fill="#ff0000" stroke="none" transform="translate(0,200)">
+	<path d="M170 627 c-75 -11 -137 -63 -161 -136 -7 -22 -8 -31 -8
+	-62 0 -24 0.2 -28 2 -38 z"/>
+	</g>
+	</svg>
+	`
+	s, err := ParseSvg(content, "", 1)
+	if err != nil {
+		t.Fatalf("cannot parse svg %v", content)
+	}
+	dis, errChan := s.ParseDrawingInstructions()
+	for e := range errChan {
+		t.Fatalf("parse drawing instruction: %v", e)
+	}
+	strux := []*DrawingInstruction{}
+	for di := range dis {
+		strux = append(strux, di)
+	}
+	c1 := strux[1]
+	c3 := strux[3]
+	if c1.CurvePoints.C1[1] != 816 || c3.CurvePoints.T[1] != 591 {
+		expect := "C95 816 33 764 9 691 C2 669 1 660 1 629 C1 605 1.2 601 3 591"
+		got := fmt.Sprintf("C%v %v ... %v", c1.CurvePoints.C1[0],
+			c1.CurvePoints.C1[1], c3.CurvePoints.T[1])
+		t.Fatalf("expect %v: got %v", expect, got)
 	}
 }
