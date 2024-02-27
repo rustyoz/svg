@@ -773,10 +773,7 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 }
 
 func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
-	var (
-		tuples      []Tuple
-		instrTuples []Tuple
-	)
+	var tuples []Tuple
 
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -790,6 +787,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 	}
 
 	for j := 0; j < len(tuples)/3; j++ {
+		instrTuples := []Tuple{}
 		for _, nt := range tuples[j*3 : (j+1)*3] {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
@@ -812,10 +810,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 }
 
 func (pdp *pathDescriptionParser) parseCurveToAbs() error {
-	var (
-		tuples      []Tuple
-		instrTuples []Tuple
-	)
+	var tuples []Tuple
 
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -832,6 +827,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 	pdp.currentsegment.addPoint([2]float64{x, y})
 
 	for j := 0; j < len(tuples)/3; j++ {
+		instrTuples := []Tuple{}
 		var cb cubicBezier
 		cb.controlpoints[0][0] = pdp.x
 		cb.controlpoints[0][1] = pdp.y
