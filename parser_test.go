@@ -66,3 +66,33 @@ func TestTransform(t *testing.T) {
 		t.Error("mismatch expected transform matrix(0.1 0 0 -0.1 0 630)")
 	}
 }
+
+func Test2Curves(t *testing.T) {
+	content := `<?xml version="1.0" standalone="no"?>
+	<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+	 "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+	<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 -450 1000 1000">
+	<path fill="none" stroke="red" stroke-width="5"
+	d="M100 200 C25 100 400 100 400 200 400 100 775 100 700 200 L400 450z" />
+	</svg>
+	`
+	s, err := ParseSvg(content, "heart", 1)
+	if err != nil {
+		t.Fatalf("cannot parse svg %v", content)
+	}
+	dis, _ := s.ParseDrawingInstructions()
+	strux := []*DrawingInstruction{}
+	for di := range dis {
+		strux = append(strux, di)
+	}
+	curveIdx := 2
+	di := strux[curveIdx]
+	if di.Kind != CurveInstruction {
+		t.Fatalf("expect curve drawing instructions, got %v", di)
+	}
+	p := di.CurvePoints // 400 100 775 100 700 200
+	if !(p.C1[0] == 400 && p.C2[0] == 775 && p.T[0] == 700) {
+		t.Fatalf("expect [400 100] [775 100] [700 200], got %v %v %v", *p.C1, *p.C2, *p.T)
+	}
+}
