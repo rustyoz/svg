@@ -75,3 +75,24 @@ func (di *DrawingInstruction) String() string {
 	}
 	return ""
 }
+
+// PathStringFromDrawingInstructions converts drawing instructions obtained
+// from svg <path/> element back into <path/> form
+func PathStringFromDrawingInstructions(dis []*DrawingInstruction) string {
+	data := " "
+	sep := ""
+	var paint *DrawingInstruction
+	for _, di := range dis {
+		if di.Kind == PaintInstruction {
+			paint = di
+		} else {
+			data += sep + di.String()
+			sep = " "
+		}
+	}
+	pt := ""
+	if paint != nil {
+		pt = paint.String()
+	}
+	return `<path d="` + data + `" ` + pt + `/>`
+}
