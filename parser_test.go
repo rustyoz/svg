@@ -2,6 +2,7 @@ package svg
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -162,4 +163,59 @@ func TestPathRelTranslate(t *testing.T) {
 			c1.CurvePoints.C1[1], c3.CurvePoints.T[1])
 		t.Fatalf("expect %v: got %v", expect, got)
 	}
+}
+
+func TestParsedPathString(t *testing.T) {
+	header := `<?xml version="1.0" standalone="no"?>
+	<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+	 "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+	<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+	 width="684pt" height="630pt" viewBox="0 0 684 630"
+	 preserveAspectRatio="xMidYMid meet">
+	`
+	path := `<g transform="translate(0,630) scale(0.1,-0.1)"
+	fill="#ff0000" stroke="none">
+	<path d="M1705 6274 c-758 -115 -1377 -637 -1614 -1360 -74 -227 -86 -311 -86
+	-624 0 -248 2 -286 23 -389 64 -315 210 -626 414 -880 34 -42 715 -731 1515
+	-1531 l1453 -1455 1444 1445 c794 795 1473 1481 1510 1524 98 117 189 259 261
+	409 233 479 267 1011 99 1516 -240 718 -861 1235 -1615 1345 -138 21 -430 21
+	-564 1 -213 -32 -397 -87 -580 -174 -188 -90 -319 -177 -478 -316 l-77 -66
+	-77 66 c-309 270 -657 431 -1054 489 -132 20 -447 20 -574 0z"/>
+	</g>
+	`
+	tail := `</svg>
+	`
+	content := header + path + tail
+	s, err := ParseSvg(content, "heart", 1)
+	if err != nil {
+		t.Fatalf("cannot parse svg %v", content)
+	}
+	dis, errChan := s.ParseDrawingInstructions()
+	for e := range errChan {
+		t.Fatalf("drawing instruction error: %v", e)
+	}
+	strux := []*DrawingInstruction{}
+	for di := range dis {
+		strux = append(strux, di)
+	}
+	tmpdir := os.TempDir() + string(os.PathSeparator)
+	f0 := tmpdir + "heart.svg"
+	f, err := os.Create(f0)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	f.WriteString(content)
+	f.Close()
+	t.Logf("original shape in %v", f0)
+
+	parsed := PathStringFromDrawingInstructions(strux)
+	f1 := tmpdir + "parsedheart.svg"
+	f, err = os.Create(f1)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	f.WriteString(header + parsed + tail)
+	f.Close()
+	t.Logf("parsed shape in %v", f1)
+	t.Log("Please check consistency of above files, with web browser or eog")
 }
