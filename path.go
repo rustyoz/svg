@@ -695,12 +695,19 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 		tuples = append(tuples, t)
 		pdp.lex.ConsumeWhiteSpace()
 	}
-	x, y := pdp.transform.Apply(pdp.x, pdp.y)
-
+	for j := 0; j < len(tuples)/3; j++ { // convert to absolute
+		j3 := j * 3
+		for i := 0; i < 3; i++ {
+			tuples[j3+i][0] += pdp.x
+			tuples[j3+i][1] += pdp.y
+		}
+		t := tuples[j3+2]
+		pdp.x, pdp.y = t[0], t[1]
+	}
 	for j := 0; j < len(tuples)/3; j++ {
-		c1x, c1y := pdp.transform.Apply(x+tuples[j*3][0], y+tuples[j*3][1])
-		c2x, c2y := pdp.transform.Apply(x+tuples[j*3+1][0], y+tuples[j*3+1][1])
-		tx, ty := pdp.transform.Apply(x+tuples[j*3+2][0], y+tuples[j*3+2][1])
+		c1x, c1y := pdp.transform.Apply(tuples[j*3][0], tuples[j*3][1])
+		c2x, c2y := pdp.transform.Apply(tuples[j*3+1][0], tuples[j*3+1][1])
+		tx, ty := pdp.transform.Apply(tuples[j*3+2][0], tuples[j*3+2][1])
 
 		pdp.p.instructions <- &DrawingInstruction{
 			Kind: CurveInstruction,
@@ -709,10 +716,6 @@ func (pdp *pathDescriptionParser) parseCurveToRelDI() error {
 				T:  &Tuple{tx, ty},
 			},
 		}
-
-		pdp.x += tuples[j*3+2][0]
-		pdp.y += tuples[j*3+2][1]
-		x, y = pdp.transform.Apply(pdp.x, pdp.y)
 	}
 
 	return nil
@@ -773,10 +776,7 @@ func (pdp *pathDescriptionParser) parseCurveToRel() error {
 }
 
 func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
-	var (
-		tuples      []Tuple
-		instrTuples []Tuple
-	)
+	var tuples []Tuple
 
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -790,6 +790,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 	}
 
 	for j := 0; j < len(tuples)/3; j++ {
+		instrTuples := []Tuple{}
 		for _, nt := range tuples[j*3 : (j+1)*3] {
 			pdp.x = nt[0]
 			pdp.y = nt[1]
@@ -812,10 +813,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbsDI() error {
 }
 
 func (pdp *pathDescriptionParser) parseCurveToAbs() error {
-	var (
-		tuples      []Tuple
-		instrTuples []Tuple
-	)
+	var tuples []Tuple
 
 	pdp.lex.ConsumeWhiteSpace()
 	for pdp.lex.PeekItem().Type == gl.ItemNumber {
@@ -832,6 +830,7 @@ func (pdp *pathDescriptionParser) parseCurveToAbs() error {
 	pdp.currentsegment.addPoint([2]float64{x, y})
 
 	for j := 0; j < len(tuples)/3; j++ {
+		instrTuples := []Tuple{}
 		var cb cubicBezier
 		cb.controlpoints[0][0] = pdp.x
 		cb.controlpoints[0][1] = pdp.y
