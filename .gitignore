@@ -1,0 +1,77 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files #
+########################
+.idea/
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# Node.js #
+###########
+node_modules/
+npm-debug.log
+
+# Python #
+##########
+*.py[cod]
+__pycache__/
+*.so
+
+# Java #
+########
+*.class
+*.jar
+*.war
+*.ear
+
+# Gradle #
+##########
+.gradle
+/build/
+
+# Maven #
+#########
+target/
+
+# Miscellaneous #
+#################
+*.bak
+*.tmp
+*.temp
