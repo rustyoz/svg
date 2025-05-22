@@ -8,6 +8,8 @@ github.com/rustyoz/Mtransform v0.0.0-20190224104252-60c8c35a3681 h1:+MSiFc2Ocn6t
 github.com/rustyoz/Mtransform v0.0.0-20190224104252-60c8c35a3681/go.mod h1:LoYQicvJKiYtg51aHi/pslb7cyYUevSnMuB5IlkjuF0=
 github.com/rustyoz/genericlexer v0.0.0-20190224115003-eb82fd2987bd h1:Obx9Gkv98ZAIwUAk4g8lmu/0qoSt0C3Rtp25JMd8mGI=
 github.com/rustyoz/genericlexer v0.0.0-20190224115003-eb82fd2987bd/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
+github.com/rustyoz/genericlexer v0.0.0-20250522143550-94c0150ad164 h1:ii1cEunZ80v0fu1z0QWsQ5+XLRgXjuEVKojFNTINYDs=
+github.com/rustyoz/genericlexer v0.0.0-20250522143550-94c0150ad164/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
