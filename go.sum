@@ -4,12 +4,10 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/rustyoz/Mtransform v0.0.0-20190224104252-60c8c35a3681 h1:+MSiFc2Ocn6tXnJqPK6gD3gMlD/Ku878zak2apGUD0Y=
-github.com/rustyoz/Mtransform v0.0.0-20190224104252-60c8c35a3681/go.mod h1:LoYQicvJKiYtg51aHi/pslb7cyYUevSnMuB5IlkjuF0=
-github.com/rustyoz/genericlexer v0.0.0-20190224115003-eb82fd2987bd h1:Obx9Gkv98ZAIwUAk4g8lmu/0qoSt0C3Rtp25JMd8mGI=
-github.com/rustyoz/genericlexer v0.0.0-20190224115003-eb82fd2987bd/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
-github.com/rustyoz/genericlexer v0.0.0-20250522143550-94c0150ad164 h1:ii1cEunZ80v0fu1z0QWsQ5+XLRgXjuEVKojFNTINYDs=
-github.com/rustyoz/genericlexer v0.0.0-20250522143550-94c0150ad164/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
+github.com/rustyoz/Mtransform v0.0.0-20250628104358-21cdda837fb7 h1:HpMd9RqrV9REV9CRnE2DQChmK2dWaLZbyxi9ycfXXUk=
+github.com/rustyoz/Mtransform v0.0.0-20250628104358-21cdda837fb7/go.mod h1:s0j+8NkGuBpMTjLD4YPQ9RavGo8K4c2/ccsoYfLU4V0=
+github.com/rustyoz/genericlexer v0.0.0-20250522144106-d3cfee480384 h1:jrCaAewj72Bp+RHPzRB+CFOLRwCiluzaiwY0R1h0SNw=
+github.com/rustyoz/genericlexer v0.0.0-20250522144106-d3cfee480384/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
