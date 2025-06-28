@@ -245,6 +245,12 @@ type DrawingInstruction struct {
 
 This library is actively used in:
 - [svg2kicad](http://github.com/rustyoz/svg2kicad) - Convert SVG to KiCad PCB format
+- [svg2gcode](https://github.com/schollz/svg2gcode) - convert SVG to gcode
+- [svg2laser](https://github.com/TechplexEngineer/svg2laser) - Software to streamline hte process of cutting FRC Robotics prototypes designed in Onshape on an Epilog Helix 18"x24" laser cutter.
+- [Spiffy](https://github.com/gucio321/spiffy) - Spiffy is a SVG to GCode converter.
+- [goimage](https://github.com/grokify/goimage) - Image manipulation library
+
+Send a pull request on the readme to be mentioned
 
 ## Contributing
 
