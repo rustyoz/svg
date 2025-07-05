@@ -27,8 +27,8 @@ type Tuple [2]float64
 type Svg struct {
 	Title        string  `xml:"title"`
 	Groups       []Group `xml:"g"`
-	Width 		 string  `xml:"width,attr"`
-	Height 		 string  `xml:"height,attr"`
+	Width        string  `xml:"width,attr"`
+	Height       string  `xml:"height,attr"`
 	ViewBox      string  `xml:"viewBox,attr"`
 	Elements     []DrawingInstructionParser
 	Name         string
@@ -45,7 +45,7 @@ type Group struct {
 	Stroke          string
 	StrokeWidth     float64
 	Fill            string
-	Opacity			float64
+	Opacity         float64
 	FillRule        string
 	Elements        []DrawingInstructionParser
 	TransformString string
@@ -239,8 +239,14 @@ func (s *Svg) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 				dip = &Circle{}
 			case "path":
 				dip = &Path{}
-
+			case "svg":
+				
+				dip = &Svg{}
 			default:
+				// For any other elements (like defs, style, etc.), skip them completely
+				if err = decoder.Skip(); err != nil {
+					return fmt.Errorf("error skipping element %s: %s", tok.Name.Local, err)
+				}
 				continue
 			}
 
